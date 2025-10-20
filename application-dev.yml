@@ -1,0 +1,17 @@
+logging:
+    level:
+        com.ppg.iicsdoc: DEBUG
+        org.springframework.web: DEBUG 
+
+    file: 
+        name: logs/iics-doc-gen-dev.log
+
+iics:
+    parser:
+        strict-mode: false 
+
+    deployment:
+        auto-commit: false 
+
+server:
+    port: 8080

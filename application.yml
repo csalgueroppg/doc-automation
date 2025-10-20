@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: iics-documentation-generator
+
+  profiles:
+    active: dev
+
+  # Jackson configuration
+  jackson:
+    serialization:
+      indent-output: true
+    deserialization:
+      fail-on-unknown-properties: false
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.ppg.iicsdoc: DEBUG
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger-{36} - %msg%n"
+
+# IICS Documentation Generator Configuration
+iics:
+  parser:
+    max-file-size-bytes: 104857600
+    validate-schema: true
+    strict-mode: false
+
+  ai:
+    api-url: ${AI_API_URL:https://api.anthropic.com/v1/messages}
+    api-key: ${AI_API_KEY:your-api-key-here}
+    model: claude-3-5-sonnet-20241022
+    timeout-seconds: 30
+    max-retries: 3
+
+  deployment:
+    docusuarus-path: ${DOCUSAURUS_PATH:../docusaurus-site/docs}
+    git-repo-url: ${GIT_REPO_URL:}
+    git-branch: main
+    auto-commit: true
+
+# Resilience4j Configuration
+resilience4j:
+  retry:
+    instance:
+      aiService:
+        max-attempts: 3
+        wait-duration: 2s
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - java.util.concurrent.TimoeutException
+
+  circuitbreaker:
+    instances:
+      aiService:
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        sliding-window-size: 10
+
+  timelimiter:
+    instances:
+      aiService:
+        timeout-duration: 30s
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+    endpoint:
+      health:
+        show-details: when-authorized
