@@ -1,12 +1,12 @@
 package com.ppg.iicsdoc.parser;
 
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.time.LocalDate;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -38,16 +38,39 @@ import com.ppg.iicsdoc.util.FileUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Service for parsing IICS XML metadata files
+ * Provides functionality for parsing IICS XML metadata files and converting
+ * them into structured {@link ParsedMetadata}
+ * 
+ * <p>
+ * This service handles validation, DOM parsing, and extraction of key metadata
+ * such as process details, connections, transformations, OpenAPI endpoints, and
+ * more.
+ * </p>
+ * 
+ * <p>
+ * Designed for use within a Spring context as a singleton service.
+ * </p>
+ * 
+ * @author Carlos Salguero
+ * @version 1.0.0
+ * @since 2025-10-21
+ * 
+ * @see ParsedMetadata
  */
 @Slf4j
 @Service
 public class XMLParserService {
 
+    /** Date formatter for consistent timestamp usage. */
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_DATE;
 
     /**
-     * Parse XML file and extract metadata
+     * Parses the given XML file and extracts metadata into a
+     * {@link ParsedMetadata} object.
+     * 
+     * @param xmlFile the path to the XML file to parse
+     * @returns the parsed metadata
+     * @throws ParsingException if the file cannot be read or parsed.
      */
     public ParsedMetadata parse(Path xmlFile) throws ParsingException {
         log.info("Starting to parse XML file: {}", xmlFile);
@@ -71,7 +94,17 @@ public class XMLParserService {
     }
 
     /**
-     * Load XML document using DOM parser
+     * Loads an XML {@link Document} from the specified file path using a DOM
+     * parser.
+     * 
+     * <p>
+     * The parser is configured to be namespace-aware and to disallow DOCTYPE
+     * declarations.
+     * </p>
+     * 
+     * @param xmlFile the path to the XML file
+     * @return the parsed XML document
+     * @throws Exception if an error occurs during parsing
      */
     private Document loadXMLDocument(Path xmlFile) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -83,7 +116,17 @@ public class XMLParserService {
     }
 
     /**
-     * Build ParsedMetadata from root element
+     * Constructs a {@link ParsedMetadata} object from the root element of the XML
+     * document.
+     * 
+     * <p>
+     * Extracts attributes and nested metadata elements such as process name, type,
+     * version, author, timestamps, connections, transformations, endpoints, and
+     * data flow.
+     * </p>
+     * 
+     * @param root the root element of the XML document
+     * @return the constructed metadata object.
      */
     private ParsedMetadata buildMetadata(Element root) {
         log.debug("Building metadata from root element: {}", root.getTagName());
@@ -105,7 +148,11 @@ public class XMLParserService {
     }
 
     /**
-     * Parse connections
+     * Parses all {@link Connection} elements from the XML root and returns
+     * a list of {@link Connection} objects.
+     *
+     * @param root the root element of the XML document
+     * @return a list of parsed connections
      */
     private List<Connection> parseConnections(Element root) {
         List<Connection> connections = new ArrayList<>();
@@ -121,7 +168,16 @@ public class XMLParserService {
     }
 
     /**
-     * Parse single connection
+     * Parses a single {@code Connection} element and constructs a
+     * {@link Connection} object.
+     * 
+     * <p>
+     * Extracts attributes such as ID, type, name, URL, host, database, and
+     * authentication type.
+     * </p>
+     * 
+     * @param elem the connection element to parse
+     * @return the parsed connection
      */
     private Connection parseConnection(Element elem) {
         String id = elem.getAttribute("id");
@@ -139,7 +195,16 @@ public class XMLParserService {
     }
 
     /**
-     * Parse transformations
+     * Parses a single {@code Transformation} element and constructs a
+     * {@link Transformation} object.
+     * 
+     * <p>
+     * Extracts attributes such as ID, type, name, expression, condition,
+     * input fields, and output fields.
+     * </p>
+     * 
+     * @param elem the transformation element to parse
+     * @return the parsed transformation
      */
     private List<Transformation> parseTransformations(Element root) {
         List<Transformation> transformations = new ArrayList<>();
@@ -155,7 +220,16 @@ public class XMLParserService {
     }
 
     /**
-     * Parse single transformation
+     * Parses a single {@code Transformation} element and constructs a
+     * {@link Transformation} object.
+     * 
+     * <p>
+     * Extracts attributes such as ID, type, name, expression, condition,
+     * and associated input/output fields.
+     * </p>
+     * 
+     * @param elem the transformation element to parse
+     * @return the parsed transformation
      */
     private Transformation parseTransformation(Element elem) {
         String id = elem.getAttribute("id");
@@ -173,7 +247,17 @@ public class XMLParserService {
     }
 
     /**
-     * Parse fields
+     * Parses a list of {@code Field} elements contained within a specified
+     * container tag.
+     * 
+     * <p>
+     * Used to extract input or output fields from transformation elements.
+     * </p>
+     * 
+     * @param parent       the parent element containing the field container
+     * @param containerTag the tag name of the container element (e.g.,
+     *                     "inputField")
+     * @return a list of parsed fields
      */
     private List<Field> parseFields(Element parent, String containerTag) {
         List<Field> fields = new ArrayList<>();
@@ -195,7 +279,15 @@ public class XMLParserService {
     }
 
     /**
-     * Parse single field
+     * Parses a single {@code <field>} element and constructs a {@link Field}
+     * object.
+     * 
+     * <p>
+     * Extracts attributes such as name, type, description, and required flag.
+     * </p>
+     *
+     * @param elem the field element to parse
+     * @return the parsed field
      */
     private Field parseField(Element elem) {
         return Field.builder()
@@ -207,7 +299,15 @@ public class XMLParserService {
     }
 
     /**
-     * Parse OpenAPI endpoints
+     * Parses the {@code OpenAPIEndpoint} section from the XML root and extracts
+     * a list of {@link OpenAPIEndpoint} objects.
+     * 
+     * <p>
+     * Each endpoint represents an API operation with associated metadata.
+     * </p>
+     * 
+     * @param root the root element of the XML element
+     * @return a list of parsed OpenAPI endpoints
      */
     private List<OpenAPIEndpoint> parseOpenAPIEndpoints(Element root) {
         List<OpenAPIEndpoint> endpoints = new ArrayList<>();
@@ -231,7 +331,16 @@ public class XMLParserService {
     }
 
     /**
-     * Parse single endpoint
+     * Parses a single {@code OpenAPIEndpoint} element and constructs an
+     * {@link OpenAPIEndpoint} object.
+     * 
+     * <p>
+     * Extracts attributes such as path, method, operation ID, summary,
+     * description, parameters, responses, and tags.
+     * </p>
+     * 
+     * @param elem endpoint element to parse
+     * @return parsed OpenAPI endpoint
      */
     private OpenAPIEndpoint parseEndpoint(Element elem) {
         String path = elem.getAttribute("path");
@@ -250,7 +359,16 @@ public class XMLParserService {
     }
 
     /**
-     * Parse parameters
+     * Parses the {@code Parameter} section from an endpoint element and
+     * returns a list of {@link Parameter} objects.
+     * 
+     * <p>
+     * each parameter includes metadata such as name, location, type, and
+     * description.
+     * </p>
+     * 
+     * @param parent the parent element containing the parameters section
+     * @return a list of parsed parameters
      */
     private List<Parameter> parseParameters(Element parent) {
         List<Parameter> parameters = new ArrayList<>();
@@ -272,7 +390,16 @@ public class XMLParserService {
     }
 
     /**
-     * Parse single parameter
+     * Parses a single {@code Parameter} element and constructs a
+     * {@link Parameter} object.
+     * 
+     * <p>
+     * Extracts attributes such as name, location, type, required flags,
+     * description, and default value.
+     * </p>
+     * 
+     * @param elem the parameter element to parse
+     * @return the parsed parameter
      */
     private Parameter parseParameter(Element elem) {
         return Parameter.builder()
@@ -286,7 +413,15 @@ public class XMLParserService {
     }
 
     /**
-     * Parse response
+     * Parses the {@code Responses} section from an endpoint element and
+     * returns a map of {@link Response} objects.
+     * 
+     * <p>
+     * Each response is keyed by its HTTP status code.
+     * </p>
+     * 
+     * @param parent the parent element containing the responses section
+     * @return a map of parsed responses keyed by status code
      */
     private Map<String, Response> parseResponses(Element parent) {
         Map<String, Response> responses = new HashMap<>();
@@ -310,7 +445,16 @@ public class XMLParserService {
     }
 
     /**
-     * Parse single response
+     * Parses a single {@code Response} element and constructs a
+     * {@link Response} object.
+     * 
+     * <p>
+     * Extract attributes such as code, description, and optional schema
+     * details.
+     * </p>
+     * 
+     * @param elem the parent element containing the responses section
+     * @return the parsed response.
      */
     private Response parseResponse(Element elem) {
         Element schemaElem = getFirstChildElement(elem, "schema");
@@ -324,7 +468,11 @@ public class XMLParserService {
     }
 
     /**
-     * Parse tags
+     * Parses the {@code <tags>} section from an endpoint element and returns a list
+     * of tag strings.
+     *
+     * @param parent the parent element containing the tags section
+     * @return a list of parsed tags
      */
     private List<String> parseTags(Element parent) {
         List<String> tags = new ArrayList<>();
@@ -346,7 +494,15 @@ public class XMLParserService {
     }
 
     /**
-     * Parse data flow
+     * Parses the {@code <dataFlow>} section from the XML root and constructs a
+     * {@link DataFlow} object.
+     * 
+     * <p>
+     * Includes source, transformation references, and target components.
+     * </p>
+     * 
+     * @param root the root element of the XML document
+     * @return the parsed data flow, or {@code null} if not present
      */
     private DataFlow parseDataFlow(Element root) {
         NodeList flowNodes = root.getElementsByTagName("dataFlow");
@@ -364,7 +520,15 @@ public class XMLParserService {
     }
 
     /**
-     * Parse data source
+     * Parses the {@code <source>} element from a data flow and constructs a
+     * {@link DataSource} object.
+     * 
+     * <p>
+     * Includes connection reference and entity name.
+     * </p>
+     * 
+     * @param parent the parent element containing the source section
+     * @return the parsed data source, or {@code null} if not present
      */
     private DataSource parseDataSource(Element parent) {
         Element sourceElem = getFirstChildElement(parent, "source");
@@ -379,7 +543,11 @@ public class XMLParserService {
     }
 
     /**
-     * Parse transformation references
+     * Parses all {@code <transformationRef>} elements from a data flow and returns
+     * a list of transformation reference IDs.
+     *
+     * @param parent the parent element containing transformation references
+     * @return a list of transformation reference IDs
      */
     private List<String> parseTransformationRefs(Element parent) {
         List<String> refs = new ArrayList<>();
@@ -394,7 +562,15 @@ public class XMLParserService {
     }
 
     /**
-     * Parse data target
+     * Parses the {@code <target>} element from a data flow and constructs a
+     * {@link DataTarget} object.
+     * 
+     * <p>
+     * Includes connection reference and entity name.
+     * </p>
+     *
+     * @param parent the parent element containing the target section
+     * @return the parsed data target, or {@code null} if not present
      */
     private DataTarget parseDataTarget(Element parent) {
         Element targetElem = getFirstChildElement(parent, "target");
@@ -409,6 +585,20 @@ public class XMLParserService {
     }
 
     // Helper methods
+    /**
+     * Retrieves the text content from a nested XML path within the given parent
+     * element.
+     * 
+     * <p>
+     * The path is specified using forward slashes (e.g.,
+     * {@code "metadata/author"}).
+     * </p>
+     *
+     * @param parent the parent XML element
+     * @param path   the slash-separated path to the target element
+     * @return the trimmed text content of the target element, or {@code null} if
+     *         not found
+     */
     private String getTextContent(Element parent, String path) {
         String[] parts = path.split("/");
         Element current = parent;
@@ -425,6 +615,15 @@ public class XMLParserService {
         return current != null ? current.getTextContent().trim() : null;
     }
 
+    /**
+     * Retrieves the text content of the first child element with the specified tag
+     * name.
+     *
+     * @param parent  the parent XML element
+     * @param tagName the tag name of the child element
+     * @return the trimmed text content of the child element, or {@code null} if not
+     *         found
+     */
     private String getElementText(Element parent, String tagName) {
         NodeList nodes = parent.getElementsByTagName(tagName);
         if (nodes.getLength() == 0) {
@@ -434,11 +633,28 @@ public class XMLParserService {
         return nodes.item(0).getTextContent().trim();
     }
 
+    /**
+     * Returns the first child element with the specified tag name.
+     *
+     * @param parent  the parent XML element
+     * @param tagName the tag name of the child element
+     * @return the first matching child element, or {@code null} if none found
+     */
     private Element getFirstChildElement(Element parent, String tagName) {
         NodeList nodes = parent.getElementsByTagName(tagName);
         return nodes.getLength() > 0 ? (Element) nodes.item(0) : null;
     }
 
+    /**
+     * Parses a string into a {@link ProcessType} enum value.
+     * 
+     * <p>
+     * Defaults to {@code CAI} if the value is unrecognized.
+     * </p>
+     * 
+     * @param type the string representation of the process type
+     * @return the parsed process type
+     */
     private ProcessType parseProcessType(String type) {
         try {
             return ProcessType.valueOf(type.toUpperCase());
@@ -448,6 +664,17 @@ public class XMLParserService {
         }
     }
 
+    /**
+     * Parses a string into a {@link ConnectionType} enum value.
+     * 
+     * <p>
+     * Spaces are replaced with underscores before parsing.
+     * Defaults to {@code OTHER} if the value is unrecognized.
+     * </p>
+     *
+     * @param type the string representation of the connection type
+     * @return the parsed connection type
+     */
     private ConnectionType parseConnectionType(String type) {
         try {
             return ConnectionType.valueOf(type.toUpperCase().replace(" ", "_"));
@@ -457,6 +684,18 @@ public class XMLParserService {
         }
     }
 
+    /**
+     * Parses the {@code <authentication>} element from a connection and returns its
+     * {@link AuthenticationType}.
+     * 
+     * <p>
+     * Hyphens are replaced with underscores before parsing.
+     * Defaults to {@code NONE} if the element is missing or unrecognized.
+     * </p>
+     * 
+     * @param elem the connection element con
+     * @return the parsed authentication type
+     */
     private AuthenticationType parseAuthType(Element elem) {
         NodeList authNodes = elem.getElementsByTagName("authentication");
         if (authNodes.getLength() == 0) {
@@ -474,6 +713,16 @@ public class XMLParserService {
         }
     }
 
+    /**
+     * Parses a string into a {@link TransformationType} enum value.
+     * 
+     * <p>
+     * Defaults to {@code OTHER} if the value is unrecognized.
+     * </p>
+     *
+     * @param type the string representation of the transformation type
+     * @return the parsed transformation type
+     */
     private TransformationType parseTransformationType(String type) {
         try {
             return TransformationType.valueOf(type.toUpperCase());
@@ -483,6 +732,16 @@ public class XMLParserService {
         }
     }
 
+    /**
+     * Parses a string into an {@link HttpMethod} enum value.
+     * 
+     * <p>
+     * Defaults to {@code GET} if the value is unrecognized.
+     * </p>
+     *
+     * @param method the string representation of the HTTP method
+     * @return the parsed HTTP method
+     */
     private HttpMethod parseHttpMethod(String method) {
         try {
             return HttpMethod.valueOf(method.toUpperCase());
@@ -492,6 +751,16 @@ public class XMLParserService {
         }
     }
 
+    /**
+     * Parses a string into a {@link ParameterLocation} enum value.
+     * 
+     * <p>
+     * Defaults to {@code QUERY} if the value is unrecognized.
+     * </p>
+     *
+     * @param location the string representation of the parameter location
+     * @return the parsed parameter location
+     */
     private ParameterLocation parseParameterLocation(String location) {
         try {
             return ParameterLocation.valueOf(location.toUpperCase());
@@ -501,6 +770,16 @@ public class XMLParserService {
         }
     }
 
+    /**
+     * Parses a date string into a {@link LocalDate} using the ISO format.
+     * 
+     * <p>
+     * Returns {@code null} if the input is empty or cannot be parsed.
+     * </p>
+     * 
+     * @param dateString the date string to parse
+     * @return the parsed date, or {@code null} if invalid
+     */
     private LocalDate parseDate(String dateString) {
         if (dateString == null || dateString.isEmpty()) {
             return null;
