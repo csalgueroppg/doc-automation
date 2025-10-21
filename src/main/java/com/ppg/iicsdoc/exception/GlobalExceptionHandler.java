@@ -1,16 +1,15 @@
 package com.ppg.iicsdoc.exception;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
-
-import lombok.extern.slf4j.Slf4j;
-
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.http.ResponseEntity;
 
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Global exception handler for all controllers
@@ -66,7 +65,7 @@ public class GlobalExceptionHandler {
             .message(ex.getMessage())
             .details(Map.of(
                 "apiEndpoint", ex.getApiEndpoint() != null ? ex.getApiEndpoint() : "unknown",
-                "statusCode": ex.getStatusCode()
+                "statusCode", ex.getStatusCode()
             ))
             .build();
 
@@ -109,7 +108,7 @@ public class GlobalExceptionHandler {
     @lombok.Builder 
     public static class ErrorResponse {
         private LocalDateTime timestamp;
-        private HttpStatus status;
+        private int status;
         private String error;
         private String message;
         private Map<String, Object> details;

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process name="CustomerDataSync" type="CAI" version="1.0">
+    <metadata>
+        <description>Synchronizes customer data between systems</description>
+        <author>John Doe</author>
+        <created>2024-01-15</created>
+        <modified>2024-10-20</modified>
+    </metadata>
+
+    <connections>
+        <connection id="conn1" type="REST">
+            <name>Customer API</name>
+            <url>https://api.example.com/customers</url>
+            <authentication type="OAuth2" />
+        </connection>
+
+        <connection id="conn2" type="Database">
+            <name>CustomerDB</name>
+            <host>db.example.com</host>
+            <database>customers</database>
+        </connection>
+    </connections>
+
+    <transformations>
+        <transformation id="trans1" type="expression">
+            <name>FormatCustomerData</name>
+            <expression>CONCAT(firstName, ' ', lastName)</expression>
+            <inputFields>
+                <field name="firstName" type="string" />
+                <field name="lastName" type="string" />
+            </inputFields>
+
+            <outputFields>
+                <field name="fullName" type="string" />
+            </outputFields>
+        </transformation>
+
+        <transformation id="trans2" type="filter">
+            <name>ActiveCustomersOnly</name>
+            <condition>status == 'ACTIVE'</condition>
+        </transformation>
+    </transformations>
+
+    <openapi>
+        <endpoint path="/customers" method="GET">
+            <operationId>getCustomers</operationId>
+            <summary>Retrieve customer list</summary>
+            <parameters>
+                <parameter name="status" in="query" type="string" />
+                <parameter name="limit" in="query" type="integer" />
+            </parameters>
+
+            <responses>
+                <response code="200">
+                    <description>Successful response</description>
+                    <schema type="array" items="Customer" />
+                </response>
+            </responses>
+
+            <tags>
+                <tag>customers</tag>
+                <tag>data-sync</tag>
+            </tags>
+        </endpoint>
+    </openapi>
+
+    <dataFlow>
+        <source>
+            <connectionRef>conn1</connectionRef>
+            <entity>Customer</entity>
+        </source>
+
+        <transformationRef>trans1</transformationRef>
+        <transformationRef>trans2</transformationRef>
+
+        <target>
+            <connectionRef>conn2</connectionRef>
+            <entity>CustomerTable</entity>
+        </target>
+    </dataFlow>
+</process>
