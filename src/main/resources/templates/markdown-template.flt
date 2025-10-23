@@ -1,0 +1,223 @@
+<#-- 
+IICS Process Documentation Template
+Variable available:
+- processName: String 
+- processType: String
+- version: String 
+- description: String 
+- author: String 
+- created: LocalDate
+- modified: LocalDate
+- connections: List<Connection>
+- transformations: List<Transformation>
+- openApiEndpoints: List<OpenAPIEndpoints>
+- dataFlow: DataFlow
+- processFlowDiagram: String (Mermaid Code)
+- apiDiagram: String (Mermaid Code)
+- generatedAt: LocalDateTime
+-->
+---
+title: ${processName}
+description: ${description!'IICS Process Documentation'}
+author: ${author!'Unknown'}
+version: ${version!'1.0'}
+generated: ${generatedAt}
+---
+
+# ${processName}
+
+## Overview 
+
+**Process Type**: ${processType}
+**Version**: ${version}
+<#if description??>**Description**: ${description}</#if>
+<#if created??>**Created**: ${created}</#if>
+<#if modified??>**Last Modified**: ${modified}</#if>
+
+---
+
+## Table of Contents 
+
+- [Overview](#overview)
+<#if processFlowDiagram??>- [Process Flow Diagram](#process-flow-diagram)</#if>
+<#if connections?? && (connections?size > 0)>- [Connections](#connections)</#if>
+<#if transformations?? && (transformations?size > 0)>- [Transformations](#transformations)</#if>
+<#if dataFlow??>- [Data Flow](#data-flow)</#if>
+<#if openApiEndpoints?? && (openApiEndpoints?size > 0)>- [API Endpoints](#api-endpoints)</#if>
+<#if apiDiagram??>- [API Sequence Diagram](#api-sequence-diagram)</#if>
+- [Technical Details](#technical-details)
+
+--- 
+
+<#if processFlowDiagram??>
+## Process Flow Diagram 
+
+The following diagram illustrates the complete process flow from source to target, including all
+transformations and decision points.
+
+${processFlowDiagram}
+
+---
+</#if>
+
+<#if connections?? && (connections?size > 0)>
+## Connections 
+
+This process uses the following connections to interact with external systems:
+
+<#list connections as conn>
+### ${conn.name}
+
+- **Type**: ${conn.type}
+- **ID**: ${conn.id}
+<#if conn.url??>- **URL**: `${conn.url}`</#if>
+<#if conn.host??>- **Host**: `${conn.host}`</#if>
+<#if conn.database??>- **Database**: `${conn.database}`</#if>
+<#if conn.authenticationType??>- **Authentication**: ${conn.authenticationType}</#if>
+
+</#list>
+
+---
+</#if>
+
+<#if transformations?? && (transformations?size > 0)>
+## Transformations 
+
+The following transformations are applied to the data as it flows through the process:
+
+<#list transformations as trans>
+### ${trans.name}
+
+- **Type**: ${trans.type}
+- **ID**: ${trans.id}
+<#if trans.expression??>- **Expression**: `${trans.expression}`</#if>
+<#if trans.condition??>- **Condition**: `${trans.condition}`</#if>
+
+<#if trans.inputFields?? && (trans.inputFields?size > 0)>
+**Input Fields**
+
+| Field Name | Type | Required |
+|------------|------|----------|
+<#list trans.inputFields as field>
+| ${field.name} | ${field.type} | ${field.required?string('Yes', 'No')} |
+</#list>
+</#if>
+
+<#if trans.outputFields?? && (trans.outputFields?size > 0)>
+**Output Fields**:
+
+| Field Name | Type | Required |
+|------------|------|----------|
+<#list trans.outputFields as field>
+| ${field.name} | ${field.type} | ${field.required?string('Yes', 'No')} |
+</#list>
+</#if>
+
+</#list>
+
+---
+</#if>
+
+<#if dataFlow??>
+## Data Flow
+
+This section describes the complete data lineage from source to target.
+
+### Source 
+
+<#if dataFlow.source??>
+- **Connection**: ${dataFlow.source.connectionRef}
+- **Enity**: ${dataFlow.source.entity}
+</#if>
+
+### Transformation Pipeline
+
+<#if dataFlow.transformationRefs?? && (dataFlow.transformationRefs?size > 0)>
+The data passes through the following transformations in order:
+
+<#list dataFlow.transformationRefs as transRef>
+${transRef?counter}. ${transRef}
+</#list>
+</#if>
+
+### Target
+
+<#if dataFlow.target??>
+- **Connection**: ${dataFlow.target.connectionRef}
+- **Entity**: ${dataFlow.target.entity}
+</#if>
+
+---
+</#if>
+
+<#if openApiEndpoints?? && (openApiEndpoints?size > 0)>
+## API Endpoints
+
+This process exposes the following API endpoints:
+
+<#list openApiEndpoints as endpoint>
+### ${endpoint.method} ${endpoint.path}
+
+<#if endpoint.summary??>**Summary**: ${endpoint.summary}</#if>
+<#if endpoint.operationId??>**Operation ID**: ${endpoint.operationId}</#if>
+<#if endpoint.description??>**Description**: ${endpoint.description}</#if>
+
+<#if endpoint.parameters?? && (endpoint.parameters?size > 0)>
+**Parameters**:
+
+| Name | Location | Type | Required | Description |
+|------|----------|------|----------|-------------|
+<#list endpoint.parameters as param>
+| ${param.name} | ${param.in} | ${param.type} | ${param.required} | ${param.description} |
+</#list>
+</#if>
+
+<#if endpoint.responses??>
+**Responses**:
+
+| Status Code | Description |
+|-------------|-------------|
+<#list endpoint.responses?keys as code>
+| ${code} | ${endpoint.responses[code].description!''} |
+</#list>
+</#if>
+
+<#if endpoint.tags?? && (endpoint.tags?size > 0)>
+**Tags**: ${endpoint.tags?join(', ')}
+</#if>
+
+</#list>
+
+---
+</#if>
+
+<#if apiDiagram??>
+## API Sequence Diagram
+
+The following sequence diagram shows the interaction flow for the API endpoints:
+
+${apiDiagram}
+
+---
+</#if>
+
+## Technical Details 
+
+### Metadata
+
+- **Process Name**: ${processName}
+- **Process Type**: ${processType}
+- **Version**: ${version}
+<#if author??>- **Author**: ${author}</#if>
+<#if created??>- **Created**: ${created}</#if>
+<#if modified??>- **Modified**: ${modified}</#if>
+
+### Generation Information
+
+- **Generated At**: ${generatedAt}
+- **Generated By**: IICS Documentation Generator v1.0
+
+## Notes 
+
+This document was automatically generated from IICS metadata. For questions or clarifications,
+please contact ${author!'the process owner'}.
