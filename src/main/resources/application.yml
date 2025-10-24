@@ -37,10 +37,10 @@ iics:
     max-retries: 3
 
   deployment:
-    docusuarus-path: ${DOCUSAURUS_PATH:../docusaurus-site/docs}
+    docusuarus-path: ${DOCUSAURUS_PATH:./generated-docs}
     git-repo-url: ${GIT_REPO_URL:}
-    git-branch: main
-    auto-commit: true
+    git-branch: ${GIT_BRANCH:main}
+    auto-commit: ${AUTO_COMMIT:true}
 
 # Resilience4j Configuration
 resilience4j:
