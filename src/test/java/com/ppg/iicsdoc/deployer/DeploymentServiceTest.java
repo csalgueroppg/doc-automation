@@ -24,7 +24,7 @@ import com.ppg.iicsdoc.model.deployment.DeploymentStrategy;
 import com.ppg.iicsdoc.model.markdown.MarkdownDocument;
 
 @ExtendWith(MockitoExtension.class)
-public class DeploymentServiceTest {
+class DeploymentServiceTest {
  
     @Mock
     private LocalFileSystemHandler fileSystemHandler;
