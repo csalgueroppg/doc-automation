@@ -26,14 +26,25 @@ import com.ppg.iicsdoc.model.domain.ParsedMetadata;
 import com.ppg.iicsdoc.model.domain.ProcessType;
 import com.ppg.iicsdoc.model.domain.Transformation;
 import com.ppg.iicsdoc.model.domain.TransformationType;
+import com.ppg.iicsdoc.validation.BusinessRulesValidation;
+import com.ppg.iicsdoc.validation.SchemaValidator;
+import com.ppg.iicsdoc.validation.WellFormednessValidator;
 import com.ppg.iicsdoc.validation.XMLValidationService;
 
 class XMLParserServiceTest {
     private XMLParserService parserService;
-    private XMLValidationService validationService;
 
     @BeforeEach
     void setUp() {
+        WellFormednessValidator wellFormednessValidator = new WellFormednessValidator();
+        SchemaValidator schemaValidator = new SchemaValidator();
+        BusinessRulesValidation businessRulesValidator = new BusinessRulesValidation();
+
+        XMLValidationService validationService = new XMLValidationService(
+                schemaValidator,
+                businessRulesValidator,
+                wellFormednessValidator);
+
         parserService = new XMLParserService(validationService);
     }
 
@@ -119,7 +130,7 @@ class XMLParserServiceTest {
         assertEquals("CustomerTable", flow.getTarget().getEntity());
     }
 
-    @Test 
+    @Test
     void shouldThrowExceptionForNonExistentFile() {
         Path xmlFile = Paths.get("src/test/resources/sample-xml/non-existent.xml");
         ParsingException exception = assertThrows(ParsingException.class, () -> {
@@ -129,7 +140,7 @@ class XMLParserServiceTest {
         assertTrue(exception.getMessage().contains("Failed to parse XML file"));
     }
 
-    @Test 
+    @Test
     void shouldHandleTransformations() throws Exception {
         Path xmlFile = Paths.get("src/test/resources/sample-xml/simple-cai-process.xml");
         ParsedMetadata result = parserService.parse(xmlFile);
@@ -153,7 +164,7 @@ class XMLParserServiceTest {
         assertEquals("string", fullNameField.getType());
     }
 
-    @Test 
+    @Test
     void shouldParseParametersCorrectly() throws Exception {
         Path xmlFile = Paths.get("src/test/resources/sample-xml/simple-cai-process.xml");
         ParsedMetadata result = parserService.parse(xmlFile);
@@ -163,14 +174,14 @@ class XMLParserServiceTest {
         assertEquals("status", statusParam.getName());
         assertEquals(ParameterLocation.QUERY, statusParam.getIn());
         assertEquals("string", statusParam.getType());
-        
+
         Parameter limitParam = endpoint.getParameters().get(1);
         assertEquals("limit", limitParam.getName());
         assertEquals(ParameterLocation.QUERY, statusParam.getIn());
         assertEquals("integer", limitParam.getType());
     }
 
-    @Test 
+    @Test
     void shouldHandleMissingOptionalFields() throws Exception {
         Path xmlFile = Paths.get("src/test/resources/sample-xml/simple-cai-process.xml");
         ParsedMetadata result = parserService.parse(xmlFile);

@@ -49,7 +49,7 @@ public class SchemaValidatorTest {
         Files.writeString(xmlFile, invalidXml);
 
         SchemaValidationResult result = validator.validate(xmlFile);
-        assertTrue(result.isValid());
+        assertFalse(result.isValid(), "Expected XML to be invalid due to missing required attributes");
         assertTrue(result.getErrorCount() > 0);
     }
 

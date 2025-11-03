@@ -1,25 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           targetNamespace="http://informatica.com/iics"
-           xmlns:iics="http://informatica.com/iics"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            elementFormDefault="qualified">
 
     <!-- Root Element -->
-    <xs:element name="process" type="iics:ProcessType" />
+    <xs:element name="process" type="ProcessType" />
 
     <!-- Process Type -->
     <xs:complexType name="ProcessType">
         <xs:sequence>
-            <xs:element name="metadata" type="iics:MetadataType" />
-            <xs:element name="connections" type="iics:ConnectionsType" minOccurs="0" />
-            <xs:element name="transformations" type="iics:TransformationsType" minOccurs="0" />
-            <xs:element name="openapi" type="iics:OpenAPIType" minOccurs="0" />
-            <xs:element name="dataFlow" type="iics:DataFlowType" minOccurs="0" />
+            <xs:element name="metadata" type="MetadataType" />
+            <xs:element name="connections" type="ConnectionsType" minOccurs="0" />
+            <xs:element name="transformations" type="TransformationsType" minOccurs="0" />
+            <xs:element name="openapi" type="OpenAPIType" minOccurs="0" />
+            <xs:element name="dataFlow" type="DataFlowType" minOccurs="0" />
         </xs:sequence>
 
         <xs:attribute name="name" type="xs:string" use="required" />
-        <xs:attribute name="type" type="iics:ProcessTypeEnum" use="required" />
+        <xs:attribute name="type" type="ProcessTypeEnum" use="required" />
         <xs:attribute name="version" type="xs:string" />
     </xs:complexType>
 
@@ -44,7 +42,7 @@
     <!-- Connections Type -->
     <xs:complexType name="ConnectionsType">
         <xs:sequence>
-            <xs:element name="connection" type="iics:ConnectionType" maxOccurs="unbounded" />
+            <xs:element name="connection" type="ConnectionType" maxOccurs="unbounded" />
         </xs:sequence>
     </xs:complexType>
 
@@ -55,7 +53,7 @@
             <xs:element name="url" type="xs:string" minOccurs="0" />
             <xs:element name="host" type="xs:string" minOccurs="0" />
             <xs:element name="database" type="xs:string" minOccurs="0" />
-            <xs:element name="authentication" type="xs:string" minOccurs="0" />
+            <xs:element name="authentication" type="AuthenticationType" minOccurs="0"/>
         </xs:sequence>
 
         <xs:attribute name="id" type="xs:string" use="required" />
@@ -64,13 +62,13 @@
 
     <!-- Authentication Type -->
     <xs:complexType name="AuthenticationType">
-        <xs:attribute name="type" type="xs:string" />
+        <xs:attribute name="type" type="xs:string" use="required"/>
     </xs:complexType>
 
     <!-- Transformations Type -->
     <xs:complexType name="TransformationsType">
         <xs:sequence>
-            <xs:element name="transformation" type="iics:TransformationType" maxOccurs="unbounded" />
+            <xs:element name="transformation" type="TransformationType" maxOccurs="unbounded" />
         </xs:sequence>
     </xs:complexType>
 
@@ -80,8 +78,8 @@
             <xs:element name="name" type="xs:string" />
             <xs:element name="expression" type="xs:string" minOccurs="0" />
             <xs:element name="condition" type="xs:string" minOccurs="0" />
-            <xs:element name="inputFields" type="iics:FieldsType" minOccurs="0" />
-            <xs:element name="outputFields" type="iics:FieldsType" minOccurs="0" />
+            <xs:element name="inputFields" type="FieldsType" minOccurs="0" />
+            <xs:element name="outputFields" type="FieldsType" minOccurs="0" />
         </xs:sequence>
 
         <xs:attribute name="id" type="xs:string" use="required" />
@@ -91,7 +89,7 @@
     <!-- Fields Type -->
     <xs:complexType name="FieldsType">
         <xs:sequence>
-            <xs:element name="field" type="iics:FieldType" maxOccurs="unbounded" />
+            <xs:element name="field" type="FieldType" maxOccurs="unbounded" />
         </xs:sequence>
     </xs:complexType>
 
@@ -105,7 +103,7 @@
     <!-- OpenAPI Type -->
     <xs:complexType name="OpenAPIType">
         <xs:sequence>
-            <xs:element name="endpoint" type="iics:EndpointType" maxOccurs="unbounded" />
+            <xs:element name="endpoint" type="EndpointType" maxOccurs="unbounded" />
         </xs:sequence>
     </xs:complexType>
 
@@ -115,13 +113,13 @@
             <xs:element name="operationId" type="xs:string" />
             <xs:element name="summary" type="xs:string" minOccurs="0" />
             <xs:element name="description" type="xs:string" minOccurs="0" />
-            <xs:element name="parameters" type="iics:ParametersType" minOccurs="0" />
-            <xs:element name="responses" type="iics:ResponsesType" minOccurs="0" />
-            <xs:element name="tags" type="iics:TagsType" minOccurs="0" />
+            <xs:element name="parameters" type="ParametersType" minOccurs="0" />
+            <xs:element name="responses" type="ResponsesType" minOccurs="0" />
+            <xs:element name="tags" type="TagsType" minOccurs="0" />
         </xs:sequence>
 
         <xs:attribute name="path" type="xs:string" use="required" />
-        <xs:attribute name="method" type="iics:HttpMethodType" use="required" />
+        <xs:attribute name="method" type="HttpMethodType" use="required" />
     </xs:complexType>
 
     <!-- HTTP Method Type -->
@@ -138,7 +136,7 @@
     <!-- Parameters Type -->
     <xs:complexType name="ParametersType">
         <xs:sequence>
-            <xs:element name="parameter" type="iics:ParameterType" maxOccurs="unbounded" />
+            <xs:element name="parameter" type="ParameterType" maxOccurs="unbounded" />
         </xs:sequence>
     </xs:complexType>
 
@@ -153,7 +151,7 @@
     <!-- Responses Type -->
     <xs:complexType name="ResponsesType">
         <xs:sequence>
-            <xs:element name="response" type="iics:ResponseType" maxOccurs="unbounded" />
+            <xs:element name="response" type="ResponseType" maxOccurs="unbounded" />
         </xs:sequence>
     </xs:complexType>
 
@@ -161,7 +159,7 @@
     <xs:complexType name="ResponseType">
         <xs:sequence>
             <xs:element name="description" type="xs:string" />
-            <xs:element name="schema" type="iics:SchemaType" minOccurs="0" />
+            <xs:element name="schema" type="SchemaType" minOccurs="0" />
         </xs:sequence>
         <xs:attribute name="code" type="xs:string" use="required" />
     </xs:complexType>
@@ -182,9 +180,9 @@
     <!-- Data Flow Type -->
     <xs:complexType name="DataFlowType">
         <xs:sequence>
-            <xs:element name="source" type="iics:DataSourceType" />
-            <xs:element name="transformationRef" type="xs:string" minOccurs="0" />
-            <xs:element name="target" type="iics:DataTargetType" />
+            <xs:element name="source" type="DataSourceType" />
+            <xs:element name="transformationRef" type="xs:string" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="target" type="DataTargetType" />
         </xs:sequence>
     </xs:complexType>
 

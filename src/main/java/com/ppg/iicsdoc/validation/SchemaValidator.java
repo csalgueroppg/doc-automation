@@ -2,6 +2,7 @@ package com.ppg.iicsdoc.validation;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -199,16 +200,25 @@ public class SchemaValidator {
         try {
             SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            factory.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            factory.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
 
-            InputStream schemaStream = getClass().getResourceAsStream(schemaPath);
-            if (schemaStream == null) {
+            URL schemaUrl = getClass().getResource(schemaPath);
+            if (schemaUrl == null) {
                 throw new IllegalStateException("Schema file not found: " + schemaPath);
             }
 
-            return factory.newSchema(new StreamSource(schemaStream));
+            StreamSource source = new StreamSource(schemaUrl.openStream());
+            source.setSystemId(schemaUrl.toExternalForm());
+
+            log.info("Loaded schema from {} (targetNamespace: probably OK)", schemaPath);
+            return factory.newSchema(source);
         } catch (SAXException e) {
             log.error("Failed to load schema", e);
             throw new IllegalStateException("Failed to load schema: " + schemaPath, e);
+        } catch (IOException e) {
+            log.error("StreamSource I/O operations failed", e);
+            throw new IllegalStateException("I/O operations failed", e);
         }
     }
 

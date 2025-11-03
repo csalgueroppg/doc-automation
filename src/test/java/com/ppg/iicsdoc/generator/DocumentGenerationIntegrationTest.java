@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +18,10 @@ import com.ppg.iicsdoc.model.ai.MermaidDiagram;
 import com.ppg.iicsdoc.model.domain.ParsedMetadata;
 import com.ppg.iicsdoc.model.markdown.MarkdownDocument;
 import com.ppg.iicsdoc.parser.XMLParserService;
+import com.ppg.iicsdoc.validation.BusinessRulesValidation;
+import com.ppg.iicsdoc.validation.SchemaValidator;
+import com.ppg.iicsdoc.validation.WellFormednessValidator;
+import com.ppg.iicsdoc.validation.XMLValidationService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,12 +33,24 @@ import lombok.extern.slf4j.Slf4j;
 @SpringBootTest
 @ActiveProfiles("test")
 class DocumentGenerationIntegrationTest {
-
-    @Autowired
     private XMLParserService parserService;
 
     @Autowired
     private MarkdownGeneratorService markdownGenerator;
+
+    @BeforeEach
+    void setUp() {
+        WellFormednessValidator wellFormednessValidator = new WellFormednessValidator();
+        SchemaValidator schemaValidator = new SchemaValidator();
+        BusinessRulesValidation businessRulesValidator = new BusinessRulesValidation();
+
+        XMLValidationService validationService = new XMLValidationService(
+                schemaValidator,
+                businessRulesValidator,
+                wellFormednessValidator);
+
+        parserService = new XMLParserService(validationService);
+    }
 
     @Test
     void shouldGenerateCompleteDocumentation() throws Exception {

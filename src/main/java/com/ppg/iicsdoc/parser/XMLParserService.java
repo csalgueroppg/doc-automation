@@ -1,5 +1,6 @@
 package com.ppg.iicsdoc.parser;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -97,6 +98,36 @@ public class XMLParserService {
         long startTime = System.currentTimeMillis();
 
         try {
+            if (!Files.exists(xmlFile) || !Files.isReadable(xmlFile)) {
+                throw new ParsingException("Failed to parse XML file: File does" + 
+                    " not exist or is not readable" + xmlFile);
+            }
+
+            log.info("Validating XML file");
+            SchemaValidationResult validationResult = validationService.validateComplete(xmlFile);
+
+            if (!validationResult.isValid()) {
+                log.error("XML validation failed with {} errors", 
+                    validationResult.getErrorCount());
+
+                List<String> errorMessages = validationResult.getErrors().stream()  
+                    .map(e -> String.format("[%s] Line %d: %s", 
+                        e.getCode(), e.getLineNumber(), e.getMessage()))
+                    .toList();
+
+                throw new ParsingException(
+                    "XML Validation failed",
+                    xmlFile.toString(),
+                    errorMessages);
+            }
+
+            if (validationResult.hasWarnings()) {
+                log.warn("XML validation produced {} warnings", 
+                    validationResult.getWarningCount());
+
+                validationResult.getWarnings().forEach(w -> log.warn("  [{}] {}", 
+                    w.getCode(), w.getMessage()));
+            }
 
             FileUtil.validateFileReadable(xmlFile);
 
