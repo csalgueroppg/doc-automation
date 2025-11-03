@@ -26,13 +26,15 @@ import com.ppg.iicsdoc.model.domain.ParsedMetadata;
 import com.ppg.iicsdoc.model.domain.ProcessType;
 import com.ppg.iicsdoc.model.domain.Transformation;
 import com.ppg.iicsdoc.model.domain.TransformationType;
+import com.ppg.iicsdoc.validation.XMLValidationService;
 
 class XMLParserServiceTest {
     private XMLParserService parserService;
+    private XMLValidationService validationService;
 
     @BeforeEach
     void setUp() {
-        parserService = new XMLParserService();
+        parserService = new XMLParserService(validationService);
     }
 
     @Test

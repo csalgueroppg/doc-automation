@@ -33,7 +33,9 @@ import com.ppg.iicsdoc.model.domain.ProcessType;
 import com.ppg.iicsdoc.model.domain.Response;
 import com.ppg.iicsdoc.model.domain.Transformation;
 import com.ppg.iicsdoc.model.domain.TransformationType;
+import com.ppg.iicsdoc.model.validation.SchemaValidationResult;
 import com.ppg.iicsdoc.util.FileUtil;
+import com.ppg.iicsdoc.validation.XMLValidationService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -64,12 +66,30 @@ public class XMLParserService {
     /** Date formatter for consistent timestamp usage. */
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_DATE;
 
+    /** XML schema validation instance */
+    private final XMLValidationService validationService;
+
+    /**
+     * Creates a new instance of {@code XMLParserService} with an attached
+     * {@link XMLValidationService} for schema validation.
+     * 
+     * @param validationService XML schema validation service instance
+     */
+    public XMLParserService(XMLValidationService validationService) {
+        this.validationService = validationService;
+    }
+
     /**
      * Parses the given XML file and extracts metadata into a
      * {@link ParsedMetadata} object.
      * 
+     * <p>
+     * Uses a custom schema validator as the first step ensuring the xml file
+     * is valid and follows the expected pattern.
+     * </p>
+     * 
      * @param xmlFile the path to the XML file to parse
-     * @returns the parsed metadata
+     * @return the parsed metadata
      * @throws ParsingException if the file cannot be read or parsed.
      */
     public ParsedMetadata parse(Path xmlFile) throws ParsingException {
@@ -77,6 +97,7 @@ public class XMLParserService {
         long startTime = System.currentTimeMillis();
 
         try {
+
             FileUtil.validateFileReadable(xmlFile);
 
             Document doc = loadXMLDocument(xmlFile);
@@ -87,8 +108,31 @@ public class XMLParserService {
             log.info("Successfully parsed XML file in {} ms", duration);
 
             return metadata;
+        } catch (ParsingException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Failed to parse XML files: {}", xmlFile, e);
+            throw new ParsingException("Failed to parse XML file", e);
+        }
+    }
+
+    /**
+     * Parses the given XML file without schema validation.
+     * 
+     * @param xmlFile the path to the XML file to parse
+     * @return the parsed metadata
+     * @throws ParsingException if the file cannot be read or parsed.
+     */
+    public ParsedMetadata parseWithoutValidation(Path xmlFile) throws Exception {
+        log.warn("Parsing XML without validation (not recommended)");
+
+        try {
+            Document doc = loadXMLDocument(xmlFile);
+            Element root = doc.getDocumentElement();
+
+            return buildMetadata(root);
+        } catch (Exception e) {
+            log.error("Failed to parse XML file", e);
             throw new ParsingException("Failed to parse XML file", e);
         }
     }

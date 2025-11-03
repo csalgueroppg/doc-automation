@@ -17,7 +17,13 @@ import com.ppg.iicsdoc.model.deployment.DeploymentConfig;
 import com.ppg.iicsdoc.model.deployment.DeploymentResult;
 import com.ppg.iicsdoc.model.domain.ParsedMetadata;
 import com.ppg.iicsdoc.model.markdown.MarkdownDocument;
+import com.ppg.iicsdoc.model.validation.SchemaValidationResult;
 import com.ppg.iicsdoc.parser.XMLParserService;
+import com.ppg.iicsdoc.validation.BusinessRulesValidation;
+import com.ppg.iicsdoc.validation.SchemaValidator;
+import com.ppg.iicsdoc.validation.ValidationReportGenerator;
+import com.ppg.iicsdoc.validation.WellFormednessValidator;
+import com.ppg.iicsdoc.validation.XMLValidationService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -78,6 +84,8 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
     private final AIAgentService aiAgent;
     private final MarkdownGeneratorService markdownGenerator;
     private final DeploymentService deploymentService;
+    private final XMLValidationService xmlValidationService;
+    private final ValidationReportGenerator validationReportGenerator;
 
     public DocumentationGeneratorCLI(
             XMLParserService xmlParser,
@@ -88,6 +96,13 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         this.aiAgent = aiAgent;
         this.markdownGenerator = markdownGenerator;
         this.deploymentService = deploymentService;
+
+        this.xmlValidationService = new XMLValidationService(
+                new SchemaValidator(),
+                new BusinessRulesValidation(),
+                new WellFormednessValidator());
+
+        this.validationReportGenerator = new ValidationReportGenerator();
     }
 
     public static void main(String[] args) {
@@ -148,6 +163,27 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
      */
     private void executePipeline(CLIArguments args) throws Exception {
         Path inputFile = Paths.get(args.getInputFile());
+
+        log.info("Validating XML file");
+        SchemaValidationResult validationResult = xmlValidationService.validateComplete(inputFile);
+
+        if (!validationResult.isValid()) {
+            log.error("XML validation failed");
+
+            String report = validationReportGenerator.generateTextReport(validationResult);
+            System.out.println("\n" + report);
+
+            throw new Exception("XML validation failed with " +
+                    validationResult.getErrorCount() + " errors");
+        }
+
+        if (!validationResult.hasWarnings()) {
+            log.warn("XML validation passed with {} warnings", validationResult.getWarningCount());
+            validationResult.getWarnings().forEach(w -> log.warn("  [{}] {}",
+                    w.getCode(), w.getMessage()));
+        } else {
+            log.info("XML is valid");
+        }
 
         log.info("Parsing XML file: {}", inputFile.getFileName());
         ParsedMetadata metadata = xmlParser.parse(inputFile);
