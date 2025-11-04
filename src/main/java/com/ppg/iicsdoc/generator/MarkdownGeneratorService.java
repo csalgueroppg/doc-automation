@@ -9,12 +9,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ppg.iicsdoc.model.ai.MermaidDiagram;
 import com.ppg.iicsdoc.model.domain.ParsedMetadata;
 import com.ppg.iicsdoc.model.markdown.DocumentMetadata;
 import com.ppg.iicsdoc.model.markdown.MarkdownDocument;
+import com.ppg.iicsdoc.model.tags.Tag;
+import com.ppg.iicsdoc.model.tags.TagVerificationResult;
+import com.ppg.iicsdoc.model.tags.TaggedDocument;
+import com.ppg.iicsdoc.tags.TagParser;
+import com.ppg.iicsdoc.tags.TagRenderer;
+import com.ppg.iicsdoc.tags.TagVerifier;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -59,6 +66,15 @@ public class MarkdownGeneratorService {
 
     /** Service configuration */
     private final Configuration freemarkerConfig;
+
+    @Autowired
+    private TagParser tagParser;
+
+    @Autowired
+    private TagVerifier tagVerifier;
+
+    @Autowired
+    private TagRenderer tagRenderer;
 
     public MarkdownGeneratorService(Configuration freemarkerConfig) {
         this.freemarkerConfig = freemarkerConfig;
@@ -147,6 +163,29 @@ public class MarkdownGeneratorService {
             ParsedMetadata metadata,
             MermaidDiagram processFlowDiagram) {
         return generate(metadata, processFlowDiagram, null);
+    }
+
+    public MarkdownDocument generateWithTags(
+        ParsedMetadata metadata,
+        MermaidDiagram processFlowDiagram,
+        MermaidDiagram apiDiagram) {
+        MarkdownDocument baseDocument = generate(metadata, processFlowDiagram, apiDiagram);
+        TaggedDocument taggedDoc = tagParser.parse(
+            baseDocument.getFilename(),
+            baseDocument.getContent());
+        
+        TagVerificationResult verificationResult = tagVerifier.verify(taggedDoc);
+        String enhancedDoc = tagRenderer.replaceTagsWithRendered(
+            taggedDoc.getContent(),
+            taggedDoc.getTags());
+
+        if (!verificationResult.isAllValid()) {
+            enhancedDoc += "\n\n---\n\n## Tag Verification Status\n\n";
+            enhancedDoc += generateTagVerificationSection(verificationResult);
+        }
+
+        baseDocument.setContent(enhancedDoc);
+        return baseDocument;
     }
 
     /**
@@ -352,5 +391,27 @@ public class MarkdownGeneratorService {
                 .generatedBy("IICS Documentation Generator v1.0.0")
                 .customMetadata(metadata.getAdditionalProperties())
                 .build();
+    }
+
+    private String generateTagVerificationSection(TagVerificationResult result) {
+        StringBuilder section = new StringBuilder();
+        section.append(String.format("✅ Valid: %d\n", result.getValidTags()));
+        section.append(String.format("⚠️ Outdated: %d\n", result.getOutdatedTags()));
+        section.append(String.format("❌ Missing: %d\n", result.getMissingTags()));
+        section.append(String.format("❌ Error: %d\n", result.getErrorTags()));
+        section.append(String.format("\n**Success Rate**: %.1f%%\n\n", 
+            result.getSuccessRate() * 100));
+
+        if (!result.getProblematicTags().isEmpty()) {
+            section.append("### Issues Found\n\n");
+            for (Tag tag : result.getProblematicTags()) {
+                section.append(String.format("- **%s**: %s\n", 
+                    tag.getLabel() != null ? tag.getLabel() : tag.getId(),
+                    tag.getStatus(),
+                    tag.getDescription()));
+            }
+        }
+
+        return section.toString();
     }
 }
