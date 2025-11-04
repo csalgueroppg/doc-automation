@@ -21,7 +21,13 @@ import com.ppg.iicsdoc.model.validation.SchemaValidationResult;
 import com.ppg.iicsdoc.parser.XMLParserService;
 import com.ppg.iicsdoc.validation.BusinessRulesValidation;
 import com.ppg.iicsdoc.validation.SchemaValidator;
-import com.ppg.iicsdoc.validation.ValidationReportGenerator;
+import com.ppg.iicsdoc.validation.report.ValidationReportExporter;
+import com.ppg.iicsdoc.validation.report.ValidationReportGenerator;
+import com.ppg.iicsdoc.validation.report.ValidationReportGenerator.ReportFormat;
+
+import freemarker.template.Configuration;
+import freemarker.template.Version;
+
 import com.ppg.iicsdoc.validation.WellFormednessValidator;
 import com.ppg.iicsdoc.validation.XMLValidationService;
 
@@ -86,6 +92,7 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
     private final DeploymentService deploymentService;
     private final XMLValidationService xmlValidationService;
     private final ValidationReportGenerator validationReportGenerator;
+    private final ValidationReportExporter validationExporter;
 
     public DocumentationGeneratorCLI(
             XMLParserService xmlParser,
@@ -102,7 +109,9 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
                 new BusinessRulesValidation(),
                 new WellFormednessValidator());
 
-        this.validationReportGenerator = new ValidationReportGenerator();
+        Configuration freemarkerConfig = new Configuration(new Version("2.32.0"));
+        this.validationReportGenerator = new ValidationReportGenerator(freemarkerConfig);
+        this.validationExporter = new ValidationReportExporter(validationReportGenerator);
     }
 
     public static void main(String[] args) {
@@ -167,22 +176,35 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         log.info("Validating XML file");
         SchemaValidationResult validationResult = xmlValidationService.validateComplete(inputFile);
 
-        if (!validationResult.isValid()) {
-            log.error("XML validation failed");
+        if (args.getReportOutput() != null) {
+            ReportFormat format = parseReportFormat(args.getReportFormat());
+            Path reportFile;
 
+            if ("all".equalsIgnoreCase(args.getReportFormat())) {
+                validationExporter.exportAll(validationResult, Paths.get(args.getReportOutput()));
+                log.info("Validation report exported to: {}", args.getReportOutput());
+            } else {
+                reportFile = validationExporter.export(
+                    validationResult,
+                    Paths.get(args.getReportOutput()),
+                    format);
+                
+                log.info("Validation report exported to: {}", reportFile.toAbsolutePath());
+            }
+        } else {
             String report = validationReportGenerator.generateTextReport(validationResult);
             System.out.println("\n" + report);
-
-            throw new Exception("XML validation failed with " +
-                    validationResult.getErrorCount() + " errors");
         }
 
-        if (!validationResult.hasWarnings()) {
+        if (!validationResult.isValid()) {
+            log.error("XML validation failed");
+            throw new Exception("XML validation failed with " + validationResult);
+        }
+
+        if (validationResult.hasWarnings()) {
             log.warn("XML validation passed with {} warnings", validationResult.getWarningCount());
-            validationResult.getWarnings().forEach(w -> log.warn("  [{}] {}",
-                    w.getCode(), w.getMessage()));
         } else {
-            log.info("XML is valid");
+            log.info("XML is valid.");
         }
 
         log.info("Parsing XML file: {}", inputFile.getFileName());
@@ -268,10 +290,29 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
                 cliArgs.setOutputDir(arg.substring("--output=".length()));
             } else if (arg.equals("--help") || arg.equals("-h")) {
                 cliArgs.setShowHelp(true);
+            } else if (arg.startsWith("--report-format=")) {
+                cliArgs.setReportFormat(arg.substring("--report-format=".length()));
+            } else if (arg.startsWith("--report-output=")) {
+                cliArgs.setReportOutput(arg.substring("--report-output=".length()));
             }
         }
 
         return cliArgs;
+    }
+
+    /**
+     * Parses the user input format into the available ones.
+     * 
+     * @param format the format to use for validation report exports.
+     * @return the matching {@code ReportFormat}
+     */
+    private ReportFormat parseReportFormat(String format) {
+        return switch (format.toLowerCase()) {
+            case "markdown", "md" -> ReportFormat.MARKDOWN;
+            case "html" -> ReportFormat.HTML;
+            case "json" -> ReportFormat.JSON;
+            default -> ReportFormat.TEXT;
+        };
     }
 
     /**
@@ -295,6 +336,8 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         System.out.println("Examples:");
         System.out.println("  java -jar iics-doc-gen.jar --input=process.xml");
         System.out.println("  java -jar iics-doc-gen.jar --input=process.xml --output=./docs");
+        System.out.println("  java -jar iics-doc-gen.jar --input=process.xml --report-format=html --report-output=./reports");
+        System.out.println("  java -jar iics-doc-gen.jar --input=process.xml --report-format=all --report-output=./reports");
         System.out.println();
         System.out.println("Environment Variables:");
         System.out.println("  AI_API_KEY       API key for diagram generation");
@@ -331,6 +374,12 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         /** Whether help information should be displayed. */
         private boolean showHelp;
 
+        /** Text, markdown, html, json format for the reports */
+        private String reportFormat = "text";
+
+        /** Output path for the report */
+        private String reportOutput;
+
         /**
          * Returns the input file path.
          *
@@ -338,6 +387,24 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
          */
         public String getInputFile() {
             return inputFile;
+        }
+
+        /**
+         * Returns the validation report output path.
+         * 
+         * @return the validation report output path.
+         */
+        public String getReportOutput() {
+            return reportOutput;
+        }
+
+        /**
+         * Returns the selected output format for validation reports.
+         * 
+         * @return The selected format option 
+         */
+        public String getReportFormat() {
+            return reportFormat;
         }
 
         /**
@@ -383,6 +450,41 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
          */
         public void setShowHelp(boolean showHelp) {
             this.showHelp = showHelp;
+        }
+
+        /**
+         * Sets the report format for validation report generation output.
+         * 
+         * <p>
+         * Available formats are:
+         * </p>
+         * 
+         * <ul>
+         * <li>Text file</li>
+         * <li>Markdown</li>
+         * <li>HTML</li>
+         * <li>JSON</li>
+         * <li>All</li>
+         * </ul>
+         * 
+         * <p>
+         * If all is selected, all output formats are used.
+         * </p>
+         * 
+         * @param format Format to use from the available ones.
+         */
+        public void setReportFormat(String format) {
+            this.reportFormat = format;
+        }
+
+        /**
+         * Sets the report path output where validation reports are going to
+         * be placed.
+         * 
+         * @param reportOutput Path where the files would be deposited
+         */
+        public void setReportOutput(String reportOutput) {
+            this.reportOutput = reportOutput;
         }
     }
 }
