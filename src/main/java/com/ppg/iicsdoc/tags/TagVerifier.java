@@ -1,10 +1,8 @@
 package com.ppg.iicsdoc.tags;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,16 +21,68 @@ import com.ppg.iicsdoc.model.tags.Tag;
 import com.ppg.iicsdoc.model.tags.TagReference;
 import com.ppg.iicsdoc.model.tags.TagVerificationResult;
 import com.ppg.iicsdoc.model.tags.TaggedDocument;
+import com.ppg.iicsdoc.util.FileHasher;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Verifies the integrity and accuracy of {@link Tag} instances
+ * within a {@link TaggedDocument}.
+ * 
+ * <p>
+ * The {@code TagVerifier} performs validation checks based on tag
+ * type and reference, including file existence, content matching,
+ * XPath elevation, and hash comparison. It produces a
+ * {@link TagVerificationResult} summarizing the outcome of the
+ * verification process.
+ * </p>
+ * 
+ * <h2>Supported Verification Types</h2>
+ * <ul>
+ * <li><b>File Reference</b>: compares file hash against stored value</li>
+ * <li><b>Line Reference / Code Snippet</b>: compares extracted lines to
+ * expected content</li>
+ * <li><b>XPath Reference</b>: evaluate XPath and compares result</li>
+ * <li><b>Element Reference</b>: checks for existence of element by ID</li>
+ * </ul>
+ * 
+ * <h2>Example Usage</h2>
+ * 
+ * <pre>{@code
+ * TagVerifier verifier = new TagVerifier();
+ * TaggedDocument doc = ...; // loaded or parsed document
+ *
+ * TagVerificationResult result = verifier.verify(doc);
+ *
+ * if (!result.isAllValid()) {
+ *     result.getProblematicTags().forEach(tag ->
+ *         System.out.println("Tag " + tag.getId() + " needs review: " + tag.getDescription()));
+ * }
+ * }</pre>
+ * 
+ * @see Tag
+ * @see TagReference
+ * @see TaggedDocument
+ * @see TagVerificationResult
+ * 
+ * @author Carlos Salguero
+ * @version 1.0.0
+ * @since 2025-11-04
+ */
 @Slf4j
 @Component
 public class TagVerifier {
-    
+
+    /**
+     * Verifies all tags in the given document and returns a summary
+     * result.
+     * 
+     * @param document the tagged document to verify
+     * @return a {@link TagVerificationResult} containing verification statistics
+     */
     public TagVerificationResult verify(TaggedDocument document) {
-        log.info("Verifying {} tags in document: {}", 
-            document.getTags().size(), document.getDocumentId());
+        log.info("Verifying {} tags in document: {}",
+                document.getTags().size(), document.getDocumentId());
 
         List<Tag> problematicTags = new ArrayList<>();
         int valid = 0;
@@ -60,7 +110,8 @@ public class TagVerifier {
                         problematicTags.add(tag);
                     }
 
-                    default -> {}
+                    default -> {
+                    }
                 }
             } catch (Exception e) {
                 log.error("Error verifying tag: {}", tag.getId(), e);
@@ -73,22 +124,28 @@ public class TagVerifier {
         }
 
         TagVerificationResult result = TagVerificationResult.builder()
-            .totalTags(document.getTags().size())
-            .validTags(valid)
-            .outdatedTags(outdated)
-            .missingTags(missing)
-            .errorTags(error)
-            .problematicTags(problematicTags)
-            .build();
+                .totalTags(document.getTags().size())
+                .validTags(valid)
+                .outdatedTags(outdated)
+                .missingTags(missing)
+                .errorTags(error)
+                .problematicTags(problematicTags)
+                .build();
 
         document.setVerificationResult(result);
-        log.info("Verification complete: {}/{} valid", 
-            valid, document.getTags().size());
+        log.info("Verification complete: {}/{} valid",
+                valid, document.getTags().size());
 
         return result;
     }
 
-    private void verifyTag(Tag tag) throws Exception {
+    /**
+     * Verifies a single tag based on its type and reference.
+     * 
+     * @param tag the tag to verify
+     * @throws Exception if verification fails unexpectedly
+     */
+    public void verifyTag(Tag tag) throws Exception {
         TagReference ref = tag.getReference();
         Path filePath = Paths.get(ref.getFilePath());
 
@@ -110,8 +167,15 @@ public class TagVerifier {
         tag.setLastVerified(LocalDateTime.now());
     }
 
+    /**
+     * Verifies a file reference by comparing its hash.
+     * 
+     * @param tag      the tag to verify
+     * @param filePath the path to the referenced file
+     * @throws Exception if hash calculation fails
+     */
     private void verifyFileReference(Tag tag, Path filePath) throws Exception {
-        String currentHash = calculateFileHash(filePath);
+        String currentHash = FileHasher.calculateFileHash(filePath);
         if (tag.getReference().getHash() == null) {
             tag.getReference().setHash(currentHash);
             tag.setStatus(Tag.TagStatus.VALID);
@@ -123,6 +187,13 @@ public class TagVerifier {
         }
     }
 
+    /**
+     * Verifies a line reference or code snippet by comparing extracted lines.
+     * 
+     * @param tag      the tag to verify
+     * @param filePath the path to the referenced file
+     * @throws Exception if line extraction fails
+     */
     private void verifyLineReference(Tag tag, Path filePath) throws Exception {
         List<String> lines = Files.readAllLines(filePath);
         TagReference ref = tag.getReference();
@@ -160,6 +231,14 @@ public class TagVerifier {
         }
     }
 
+    /**
+     * Verifies an XPath reference by evaluating the expression against the XML
+     * file.
+     *
+     * @param tag      the tag to verify
+     * @param filePath the path to the XML file
+     * @throws Exception if XPath evaluation fails
+     */
     private void verifyXPathReference(Tag tag, Path filePath) throws Exception {
         TagReference ref = tag.getReference();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -189,6 +268,13 @@ public class TagVerifier {
         }
     }
 
+    /**
+     * Verifies an element reference by checking for an element with the given ID.
+     *
+     * @param tag      the tag to verify
+     * @param filePath the path to the XML file
+     * @throws Exception if element lookup fails
+     */
     private void verifyElementReference(Tag tag, Path filePath) throws Exception {
         TagReference ref = tag.getReference();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -207,25 +293,5 @@ public class TagVerifier {
         }
 
         tag.setStatus(Tag.TagStatus.VALID);
-    }
-
-    private String calculateFileHash(Path filePath) throws IOException {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            byte[] fileBytes = Files.readAllBytes(filePath);
-            byte[] hash = digest.digest(fileBytes);
-
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append("0");
-
-                hexString.append(hex);
-            }
-
-            return hexString.toString();
-        } catch (Exception e) {
-            throw new IOException("Failed to calculate hash", e);
-        }
     }
 }

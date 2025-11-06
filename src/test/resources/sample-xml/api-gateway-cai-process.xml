@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process name="CustomerAPIGateway" type="CAI" version="3.0"
+    schemaVersion="1.0"
+    xmlns="http://informatica.com/iics">
+
+    <metadata>
+        <description>RESTful API gateway for customer management</description>
+        <author>API Team</author>
+        <created>2024-01-10</created>
+        <modified>2024-11-06</modified>
+        <owner>Platform Team</owner>
+
+        <tags>
+            <tag>api</tag>
+            <tag>rest</tag>
+            <tag>customer</tag>
+            <tag>gateway</tag>
+        </tags>
+    </metadata>
+
+    <connections>
+        <connection id="conn_api_db" type="PostgreSQL" enabled="true">
+            <name>API Database</name>
+            <host>api-db.company.com</host>
+            <port>5432</port>
+            <database>api_prod</database>
+            <schema>customers</schema>
+            <username>api_service</username>
+            <authentication type="Password" />
+
+            <properties>
+                <property name="maxConnections" type="int">50</property>
+                <property name="connectionTimeout" type="int">10</property>
+                <property name="ssl" type="boolean">true</property>
+            </properties>
+        </connection>
+
+        <connection id="conn_cache" type="Redis" enabled="true">
+            <name>Redis Cache</name>
+            <host>cache.company.com</host>
+            <port>6379</port>
+            <authentication type="Password" />
+
+            <properties>
+                <property name="ttl" type="int">3600</property>
+                <property name="maxMemory" type="string">2gb</property>
+            </properties>
+        </connection>
+    </connections>
+
+    <transformations>
+        <transformation id="trans_validate_input" type="Validation" enabled="true">
+            <name>Validate API Input</name>
+            <description>Validates required fields and data types</description>
+
+            <inputFields>
+                <field name="customer_id" type="Integer" required="false" />
+                <field name="email" type="String" required="false" length="255" />
+                <field name="first_name" type="String" required="false" length="100" />
+                <field name="last_name" type="String" required="false" length="100" />
+            </inputFields>
+
+            <outputFields>
+                <field name="is_valid" type="Boolean" required="true" />
+                <field name="validation_errors" type="String" required="false" length="1000" />
+            </outputFields>
+        </transformation>
+
+        <transformation id="trans_format_response" type="Expression" enabled="true">
+            <name>Format API Response</name>
+            <description>Formats response according to API specification</description>
+
+            <inputFields>
+                <field name="customer_id" type="Integer" required="true" />
+                <field name="first_name" type="String" required="true" length="100" />
+                <field name="last_name" type="String" required="true" length="100" />
+                <field name="email" type="String" required="true" length="255" />
+            </inputFields>
+
+            <outputFields>
+                <field name="response_json" type="String" required="true" />
+                <field name="status_code" type="Integer" required="true" />
+            </outputFields>
+        </transformation>
+    </transformations>
+
+    <openapi version="3.0.0">
+        <info>
+            <title>Customer Management API</title>
+            <version>3.0</version>
+            <description>RESTful API for managing customer data</description>
+        </info>
+
+        <!-- GET customer by ID -->
+        <endpoint path="/api/v3/customers/{customerId}" method="GET">
+            <operationId>getCustomerById</operationId>
+            <summary>Retrieve customer by ID</summary>
+            <description>Returns detailed customer information for the specified customer ID</description>
+
+            <parameters>
+                <parameter name="customerId" in="path" type="integer" required="true">
+                    <description>Unique customer identifier</description>
+                </parameter>
+
+                <parameter name="includeOrders" in="query" type="boolean" required="false">
+                    <description>Include order history in response</description>
+                </parameter>
+            </parameters>
+
+            <responses>
+                <response code="200">
+                    <description>Customer found successfully</description>
+                    <content>
+                        <mediaType type="application/json">
+                            <schema type="object" ref="#/components/schemas/Customer" />
+                            <examples>
+                                <example name="success">
+                                    {
+                                    "customerId": 12345,
+                                    "firstName": "John",
+                                    "lastName": "Doe",
+                                    "email": "john.doe@example.com",
+                                    "status": "active"
+                                    }
+                                </example>
+                            </examples>
+                        </mediaType>
+                    </content>
+                </response>
+
+                <response code="404">
+                    <description>Customer not found</description>
+                    <content>
+                        <mediaType type="application/json">
+                            <schema type="object" ref="#/components/schemas/Error" />
+                        </mediaType>
+                    </content>
+                </response>
+
+                <response code="500">
+                    <description>Internal server error</description>
+                </response>
+            </responses>
+
+            <tags>
+                <tag>Customers</tag>
+                <tag>Read</tag>
+            </tags>
+
+            <security>
+                <requirement name="bearerAuth" type="http" />
+            </security>
+        </endpoint>
+
+        <!-- GET All Customers -->
+        <endpoint path="/api/v3/customers" method="GET">
+            <operationId>listCustomers</operationId>
+            <summary>List all customers</summary>
+            <description>Returns a paginated list of customers</description>
+
+            <parameters>
+                <parameter name="page" in="query" type="integer" required="false">
+                    <description>Page number (default: 1)</description>
+                </parameter>
+
+                <parameter name="limit" in="query" type="integer" required="false">
+                    <description>Items per page (default: 50, max: 100)</description>
+                </parameter>
+
+                <parameter name="status" in="query" type="string" required="false">
+                    <description>Filter by customer status (active, inactive, all)</description>
+                </parameter>
+
+                <parameter name="sortBy" in="query" type="string" required="false">
+                    <description>Sort field (customerId, lastName, email)</description>
+                </parameter>
+            </parameters>
+
+            <responses>
+                <response code="200">
+                    <description>Customers retrieved successfully</description>
+                    <content>
+                        <mediaType type="application/json">
+                            <schema type="object">
+                                <properties>
+                                    <property name="customers" type="array" required="true" />
+                                    <property name="totalCount" type="integer" required="true" />
+                                    <property name="page" type="integer" required="true" />
+                                    <property name="limit" type="integer" required="true" />
+                                </properties>
+                            </schema>
+                        </mediaType>
+                    </content>
+                </response>
+            </responses>
+
+            <tags>
+                <tag>Customers</tag>
+                <tag>Read</tag>
+            </tags>
+
+            <security>
+                <requirement name="bearerAuth" type="http" />
+            </security>
+        </endpoint>
+
+        <!-- POST Create Customer -->
+        <endpoint path="/api/v3/customers" method="POST">
+            <operationId>createCustomer</operationId>
+            <summary>Create a new customer</summary>
+            <description>Creates a new customer record</description>
+
+            <requestBody required="true">
+                <description>Customer data to create</description>
+                <content>
+                    <mediaType type="application/json">
+                        <schema type="object" ref="#/components/schemas/CustomerType" />
+                        <examples>
+                            <example name="create">
+                                {
+                                "firstName": "Jane",
+                                "lastName": "Doe",
+                                "email": "john.doe@example.com",
+                                "phone": "+1-555-0123",
+                                "address": {
+                                "street": "123 Main St",
+                                "city": "New York",
+                                "state": "NY",
+                                "postalCode": "10001"
+                                }
+                                }
+                            </example>
+                        </examples>
+                    </mediaType>
+                </content>
+            </requestBody>
+
+            <responses>
+                <response code="201">
+                    <description>Customer created successfully</description>
+                    <content>
+                        <mediaType type="application/json">
+                            <schema type="object" ref="#/components/schemas/Customer" />
+                        </mediaType>
+                    </content>
+                </response>
+
+                <response code="400">
+                    <description>Invalid input data</description>
+                    <content>
+                        <mediaType type="application/json">
+                            <schema type="object" ref="#/components/schemas/ValidationError" />
+                        </mediaType>
+                    </content>
+                </response>
+
+                <response code="409">
+                    <description>Customer with email already exists</description>
+                </response>
+            </responses>
+
+            <tags>
+                <tag>Customers</tag>
+                <tag>Write</tag>
+            </tags>
+
+            <security>
+                <requirement name="bearerAuth" type="http" />
+            </security>
+        </endpoint>
+
+        <!-- PUT Update Customer -->
+        <endpoint path="/api/v3/customers/{customerId}" method="PUT">
+            <operationId>updateCustomer</operationId>
+            <summary>Update customer</summary>
+            <description>Updates an existing customer record</description>
+
+            <parameters>
+                <parameter name="customerId" in="path" type="integer" required="true">
+                    <description>Customer ID to update</description>
+                </parameter>
+            </parameters>
+
+            <requestBody required="true">
+                <description>Updated customer data</description>
+                <content>
+                    <mediaType type="application/json">
+                        <schema type="object" ref="#/components/schemas/CustomerInput" />
+                    </mediaType>
+                </content>
+            </requestBody>
+
+            <responses>
+                <response code="200">
+                    <description>Customer updated successfully</description>
+                </response>
+
+                <response code="404">
+                    <description>Customer not found</description>
+                </response>
+            </responses>
+
+            <tags>
+                <tag>Customers</tag>
+                <tag>Write</tag>
+            </tags>
+
+            <security>
+                <requirement name="bearerAuth" type="http" />
+            </security>
+        </endpoint>
+
+        <!-- DELETE Customer -->
+        <endpoint path="/api/v3/customers/{customerId}" method="DELETE">
+            <operationId>deleteCustomer</operationId>
+            <summary>Delete customer</summary>
+            <description>Soft deletes a customer (marks as inactive)</description>
+
+            <parameters>
+                <parameter name="customerId" in="path" type="integer" required="true">
+                    <description>Customer ID to delete</description>
+                </parameter>
+
+                <parameter name="permanent" in="query" type="boolean" required="false">
+                    <description>Permanently delete (requires admin role)</description>
+                </parameter>
+            </parameters>
+
+            <responses>
+                <response code="204">
+                    <description>Customer deleted successfully</description>
+                </response>
+
+                <response code="404">
+                    <description>Customer not found</description>
+                </response>
+            </responses>
+
+            <tags>
+                <tag>Customers</tag>
+                <tag>Write</tag>
+            </tags>
+
+            <security>
+                <requirement name="bearerAuth" type="http" />
+                <requirement name="adminRole" type="apiKey" />
+            </security>
+        </endpoint>
+
+        <!-- Components -->
+        <components>
+            <schemas>
+                <schema name="Customer" type="object">
+                    <properties>
+                        <property name="customerId" type="integer" required="true" />
+                        <property name="firstName" type="string" required="true" />
+                        <property name="lastName" type="string" required="true" />
+                        <property name="email" type="string" required="true" />
+                        <property name="phone" type="string" required="false" />
+                        <property name="status" type="string" required="true" />
+                    </properties>
+                </schema>
+
+                <schema name="CustomerInput" type="object">
+                    <properties>
+                        <property name="firstName" type="string" required="true" />
+                        <property name="lastName" type="string" required="true" />
+                        <property name="email" type="string" required="true" />
+                        <property name="phone" type="string" required="false" />
+                    </properties>
+                </schema>
+
+                <schema name="Error" type="object">
+                    <properties>
+                        <property name="code" type="string" required="true" />
+                        <property name="message" type="string" required="true" />
+                        <property name="details" type="string" required="false" />
+                    </properties>
+                </schema>
+
+                <schema name="ValidationError" type="object">
+                    <properties>
+                        <property name="code" type="string" required="true" />
+                        <property name="message" type="string" required="true" />
+                        <property name="field" type="string" required="true" />
+                    </properties>
+                </schema>
+            </schemas>
+
+            <securitySchemes>
+                <scheme name="bearerAuth" type="http" scheme="bearer" />
+                <scheme name="adminRole" type="apiKey" />
+            </securitySchemes>
+        </components>
+    </openapi>
+
+    <dataFlow name="CustomerAPI" batchSize="1">
+        <source>
+            <connectionRef>conn_api_db</connectionRef>
+            <entity>customers</entity>
+        </source>
+
+        <transformationRef>trans_validate_input</transformationRef>
+        <transformationRef>trans_format_response</transformationRef>
+
+        <target>
+            <connectionRef>conn_api_db</connectionRef>
+            <entity>customers</entity>
+            <operation>DYNAMIC</operation>
+        </target>
+    </dataFlow>
+
+    <errorHandling>
+        <strategy type="VALIDATION_ERROR" maxRetries="0">
+            <description>Return validation error to client</description>
+            <action>RETURN_400</action>
+        </strategy>
+
+        <strategy type="NOT_FOUND" maxRetries="0">
+            <description>Return not found</description>
+            <action>RETURN_404</action>
+        </strategy>
+
+        <logging level="DEBUG" destination="ElasticSearch" />
+        <notification onError="true" onSuccess="false">
+            <email>api-team@company.com</email>
+        </notification>
+    </errorHandling>
+
+    <performance>
+        <avgExecutionTime>150ms</avgExecutionTime>
+        <peakLoadCapacity>1000 requests/second</peakLoadCapacity>
+        <recommendedBatchSize>1</recommendedBatchSize>
+        <parallelism>16</parallelism>
+    </performance>
+
+    <deployment>
+        <environment>Production</environment>
+        <region>us-east-1</region>
+        <schedule type="ALWAYS_ON" />
+
+        <dependencies>
+            <dependency>API_RATE_LIMITER</dependency>
+            <dependency>AUTH_SERVICE</dependency>
+        </dependencies>
+    </deployment>
+
+</process>

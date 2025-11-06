@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://informatica.com/iics"
+    xmlns:iics="http://informatica.com/iics"
+    elementFormDefault="qualified"
+    version="1.0">
+
+    <!-- Root Element -->
+    <xs:element name="process" type="iics:ProcessType" />
+
+    <!-- Process Type -->
+    <xs:complexType name="ProcessType">
+        <xs:sequence>
+            <xs:element name="metadata" type="iics:MetadataType" />
+            <xs:element name="connections" type="iics:ConnectionsType" minOccurs="0" />
+            <xs:element name="transformations" type="iics:TransformationsType" minOccurs="0" />
+            <xs:element name="openapi" type="iics:OpenAPIType" minOccurs="0" />
+            <xs:element name="dataFlow" type="iics:DataFlowType" minOccurs="0" />
+            <xs:element name="errorHandling" type="iics:ErrorHandlingType" minOccurs="0" />
+            <xs:element name="performance" type="iics:PerformanceType" minOccurs="0" />
+            <xs:element name="deployment" type="iics:DeploymentType" minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="type" type="iics:ProcessTypeEnum" use="required" />
+        <xs:attribute name="version" type="xs:string" default="1.0" />
+        <xs:attribute name="schemaVersion" type="xs:string" default="1.0" />
+    </xs:complexType>
+
+    <!-- Process Type Enumeration -->
+    <xs:simpleType name="ProcessTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="CAI" />
+            <xs:enumeration value="CDI" />
+            <xs:enumeration value="TASKFLOW" />
+            <xs:enumeration value="MAPPING" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Metadata Type -->
+    <xs:complexType name="MetadataType">
+        <xs:sequence>
+            <xs:element name="description" type="xs:string" minOccurs="0" />
+            <xs:element name="author" type="xs:string" minOccurs="0" />
+            <xs:element name="created" type="xs:date" minOccurs="0" />
+            <xs:element name="modified" type="xs:date" minOccurs="0" />
+            <xs:element name="owner" type="xs:string" minOccurs="0" />
+            <xs:element name="tags" type="iics:TagsListType" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tags List Type -->
+    <xs:complexType name="TagsListType">
+        <xs:sequence>
+            <xs:element name="tag" type="xs:string" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Connections Type -->
+    <xs:complexType name="ConnectionsType">
+        <xs:sequence>
+            <xs:element name="connection" type="iics:ConnectionType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Connection Type -->
+    <xs:complexType name="ConnectionType">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string" />
+            <xs:element name="url" type="xs:string" minOccurs="0" />
+            <xs:element name="host" type="xs:string" minOccurs="0" />
+            <xs:element name="port" type="xs:int" minOccurs="0" />
+            <xs:element name="database" type="xs:string" minOccurs="0" />
+            <xs:element name="schema" type="xs:string" minOccurs="0" />
+            <xs:element name="username" type="xs:string" minOccurs="0" />
+            <xs:element name="authentication" type="iics:AuthenticationType" minOccurs="0" />
+            <xs:element name="properties" type="iics:PropertiesType" minOccurs="0" />
+
+        </xs:sequence>
+
+        <xs:attribute name="id" type="xs:string" use="required" />
+        <xs:attribute name="type" type="xs:string" use="required" />
+        <xs:attribute name="enabled" type="xs:boolean" default="true" />
+    </xs:complexType>
+
+    <!-- Authentication Type -->
+    <xs:complexType name="AuthenticationType">
+        <xs:attribute name="type" type="xs:string" use="required" />
+        <xs:attribute name="method" type="xs:string" />
+    </xs:complexType>
+
+    <!-- Properties Type -->
+    <xs:complexType name="PropertiesType">
+        <xs:sequence>
+            <xs:element name="property" type="iics:PropertyType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Property Type -->
+    <xs:complexType name="PropertyType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="name" type="xs:string" use="required" />
+                <xs:attribute name="type" type="xs:string" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <!-- Transformations Type -->
+    <xs:complexType name="TransformationsType">
+        <xs:sequence>
+            <xs:element name="transformation" type="iics:TransformationType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Transformation Type -->
+    <xs:complexType name="TransformationType">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string" />
+            <xs:element name="description" type="xs:string" minOccurs="0" />
+            <xs:element name="expression" type="xs:string" minOccurs="0" />
+            <xs:element name="condition" type="xs:string" minOccurs="0" />
+            <xs:element name="inputFields" type="iics:FieldsType" minOccurs="0" />
+            <xs:element name="outputFields" type="iics:FieldsType" minOccurs="0" />
+            <xs:element name="errorHandling" type="iics:TransformationErrorHandlingType"
+                minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="id" type="xs:string" use="required" />
+        <xs:attribute name="type" type="xs:string" use="required" />
+        <xs:attribute name="enabled" type="xs:boolean" default="true" />
+    </xs:complexType>
+
+    <!-- Fields Type -->
+    <xs:complexType name="FieldsType">
+        <xs:sequence>
+            <xs:element name="field" type="iics:FieldType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Field Type -->
+    <xs:complexType name="FieldType">
+        <xs:sequence>
+            <xs:element name="description" type="xs:string" minOccurs="0" />
+            <xs:element name="defaultValue" type="xs:string" minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="type" type="xs:string" use="required" />
+        <xs:attribute name="required" type="xs:boolean" default="false" />
+        <xs:attribute name="nullable" type="xs:boolean" default="true" />
+        <xs:attribute name="length" type="xs:int" />
+        <xs:attribute name="precision" type="xs:int" />
+        <xs:attribute name="scale" type="xs:int" />
+    </xs:complexType>
+
+    <!-- Transformation Error Handling Type -->
+    <xs:complexType name="TransformationErrorHandlingType">
+        <xs:attribute name="onError" type="xs:string" />
+        <xs:attribute name="logErrors" type="xs:boolean" default="true" />
+    </xs:complexType>
+
+    <!-- OpenAPI Type -->
+    <xs:complexType name="OpenAPIType">
+        <xs:sequence>
+            <xs:element name="info" type="iics:OpenAPIInfoType" minOccurs="0" />
+            <xs:element name="endpoint" type="iics:EndpointType" maxOccurs="unbounded" />
+            <xs:element name="components" type="iics:ComponentsType" minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="version" type="xs:string" default="3.0.0" />
+    </xs:complexType>
+
+    <!-- OpenAPI Info Type -->
+    <xs:complexType name="OpenAPIInfoType">
+        <xs:sequence>
+            <xs:element name="title" type="xs:string" />
+            <xs:element name="version" type="xs:string" />
+            <xs:element name="description" type="xs:string" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Endpoint Type -->
+    <xs:complexType name="EndpointType">
+        <xs:sequence>
+            <xs:element name="operationId" type="xs:string" />
+            <xs:element name="summary" type="xs:string" minOccurs="0" />
+            <xs:element name="description" type="xs:string" minOccurs="0" />
+            <xs:element name="parameters" type="iics:ParametersType" minOccurs="0" />
+            <xs:element name="requestBody" type="iics:RequestBodyType" minOccurs="0" />
+            <xs:element name="response" type="iics:ResponseType" minOccurs="0" />
+            <xs:element name="tags" type="iics:TagsListType" minOccurs="0" />
+            <xs:element name="security" type="iics:SecurityType" minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="path" type="xs:string" use="required" />
+        <xs:attribute name="method" type="iics:HttpMethodType" use="required" />
+    </xs:complexType>
+
+    <!-- HTTP Method Type -->
+    <xs:simpleType name="HttpMethodType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="GET" />
+            <xs:enumeration value="POST" />
+            <xs:enumeration value="PUT" />
+            <xs:enumeration value="DELETE" />
+            <xs:enumeration value="PATCH" />
+            <xs:enumeration value="HEAD" />
+            <xs:enumeration value="OPTIONS" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Parameters Type -->
+    <xs:complexType name="ParametersType">
+        <xs:sequence>
+            <xs:element name="parameter" type="iics:ParameterType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Parameter Type -->
+    <xs:complexType name="ParameterType">
+        <xs:sequence>
+            <xs:element name="description" type="xs:string" minOccurs="0" />
+            <xs:element name="schema" type="iics:SchemaType" minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="in" type="xs:string" use="required" />
+        <xs:attribute name="type" type="xs:string" use="required" />
+        <xs:attribute name="required" type="xs:boolean" default="false" />
+    </xs:complexType>
+
+    <!-- Request Body Type -->
+    <xs:complexType name="RequestBodyType">
+        <xs:sequence>
+            <xs:element name="description" type="xs:string" minOccurs="0" />
+            <xs:element name="content" type="iics:ContentType" />
+        </xs:sequence>
+
+        <xs:attribute name="required" type="xs:boolean" default="false" />
+    </xs:complexType>
+
+    <!-- Content Type -->
+    <xs:complexType name="ContentType">
+        <xs:sequence>
+            <xs:element name="mediaType" type="iics:MediaTypeType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- MediaType Type -->
+    <xs:complexType name="MediaTypeType">
+        <xs:sequence>
+            <xs:element name="schema" type="iics:SchemaType" />
+            <xs:element name="examples" type="iics:ExamplesType" minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="type" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <!-- Responses Type -->
+    <xs:complexType name="ResponsesType">
+        <xs:sequence>
+            <xs:element name="response" type="iics:ResponseType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Response Type -->
+    <xs:complexType name="ResponseType">
+        <xs:sequence>
+            <xs:element name="description" type="xs:string" />
+            <xs:element name="content" type="iics:ContentType" minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="code" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <!-- Schema Type -->
+    <xs:complexType name="SchemaType">
+        <xs:sequence>
+            <xs:element name="properties" type="iics:SchemaPropertiesType" minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="type" type="xs:string" />
+        <xs:attribute name="items" type="xs:string" />
+        <xs:attribute name="ref" type="xs:string" />
+    </xs:complexType>
+
+    <!-- Schema Properties Type -->
+    <xs:complexType name="SchemaPropertiesType">
+        <xs:sequence>
+            <xs:element name="property" type="iics:SchemaPropertyType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Schema Property Type -->
+    <xs:complexType name="SchemaPropertyType">
+        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="type" type="xs:string" use="required" />
+        <xs:attribute name="required" type="xs:boolean" default="false" />
+    </xs:complexType>
+
+    <!-- Examples Type -->
+    <xs:complexType name="ExamplesType">
+        <xs:sequence>
+            <xs:element name="example" type="iics:ExampleType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Example Type -->
+    <xs:complexType name="ExampleType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="name" type="xs:string" use="required" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <!-- Security Type -->
+    <xs:complexType name="SecurityType">
+        <xs:sequence>
+            <xs:element name="requirement" type="iics:SecurityRequirementType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Security Requirement Type -->
+    <xs:complexType name="SecurityRequirementType">
+        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="type" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <!-- Components Type -->
+    <xs:complexType name="ComponentsType">
+        <xs:sequence>
+            <xs:element name="schemas" type="iics:SchemaType" minOccurs="0" />
+            <xs:element name="securitySchemes" type="iics:SecuritySchemesType" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Schemas Type -->
+    <xs:complexType name="SchemasType">
+        <xs:sequence>
+            <xs:element name="schema" type="iics:NamedSchemaType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Named Schema Type -->
+    <xs:complexType name="NamedSchemaType">
+        <xs:complexContent>
+            <xs:extension base="iics:SchemaType">
+                <xs:attribute name="name" type="xs:string" use="required" />
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <!-- Security Schemes Type -->
+    <xs:complexType name="SecuritySchemesType">
+        <xs:sequence>
+            <xs:element name="scheme" type="iics:SecuritySchemeType" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Security Scheme Type -->
+    <xs:complexType name="SecuritySchemeType">
+        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="type" type="xs:string" use="required" />
+        <xs:attribute name="scheme" type="xs:string" />
+    </xs:complexType>
+
+    <!-- Data Flow Type -->
+    <xs:complexType name="DataFlowType">
+        <xs:sequence>
+            <xs:element name="source" type="iics:DataSourceType" />
+            <xs:element name="transformationRef" type="xs:string" minOccurs="0"
+                maxOccurs="unbounded" />
+            <xs:element name="target" type="iics:DataTargetType" />
+            <xs:element name="filter" type="iics:FilterType" minOccurs="0" />
+            <xs:element name="mappings" type="iics:MappingType" minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="name" type="xs:string" />
+        <xs:attribute name="batchSize" type="xs:int" />
+    </xs:complexType>
+
+    <!-- Data Source Type -->
+    <xs:complexType name="DataSourceType">
+        <xs:sequence>
+            <xs:element name="connectionRef" type="xs:string" />
+            <xs:element name="entity" type="xs:string" />
+            <xs:element name="query" type="xs:string" minOccurs="0" />
+            <xs:element name="fields" type="iics:FieldsType" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Data Target Type -->
+    <xs:complexType name="DataTargetType">
+        <xs:sequence>
+            <xs:element name="connectionRef" type="xs:string" />
+            <xs:element name="entity" type="xs:string" />
+            <xs:element name="operation" type="xs:string" minOccurs="0" />
+            <xs:element name="fields" type="iics:FieldsType" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Filter Type -->
+    <xs:complexType name="FilterType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="type" type="xs:string" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <!-- Mapping Type -->
+    <xs:complexType name="MappingType">
+        <xs:attribute name="source" type="xs:string" use="required" />
+        <xs:attribute name="target" type="xs:string" use="required" />
+        <xs:attribute name="transformation" type="xs:string" />
+    </xs:complexType>
+
+    <!-- Error Handling Type -->
+    <xs:complexType name="ErrorHandlingType">
+        <xs:sequence>
+            <xs:element name="strategy" type="iics:ErrorStrategyType" maxOccurs="unbounded" />
+            <xs:element name="logging" type="iics:LoggingType" minOccurs="0" />
+            <xs:element name="notification" type="iics:NotificationType" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Error Strategy Type -->
+    <xs:complexType name="ErrorStrategyType">
+        <xs:sequence>
+            <xs:element name="description" type="xs:string" minOccurs="0" />
+            <xs:element name="action" type="xs:string" />
+        </xs:sequence>
+
+        <xs:attribute name="type" type="xs:string" use="required" />
+        <xs:attribute name="maxRetries" type="xs:int" />
+    </xs:complexType>
+
+    <!-- Logging Type -->
+    <xs:complexType name="LoggingType">
+        <xs:attribute name="level" type="xs:string" />
+        <xs:attribute name="destination" type="xs:string" />
+    </xs:complexType>
+
+    <!-- Notification Type -->
+    <xs:complexType name="NotificationType">
+        <xs:sequence>
+            <xs:element name="email" type="xs:string" maxOccurs="unbounded" />
+        </xs:sequence>
+
+        <xs:attribute name="onError" type="xs:boolean" default="true" />
+        <xs:attribute name="onSuccess" type="xs:boolean" default="false" />
+    </xs:complexType>
+
+    <!-- Performance Type -->
+    <xs:complexType name="PerformanceType">
+        <xs:sequence>
+            <xs:element name="avgExecutionTime" type="xs:string" minOccurs="0" />
+            <xs:element name="peakLoadCapacity" type="xs:string" minOccurs="0" />
+            <xs:element name="recommendedBatchSize" type="xs:int" minOccurs="0" />
+            <xs:element name="parallelism" type="xs:int" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Deployment Type -->
+    <xs:complexType name="DeploymentType">
+        <xs:sequence>
+            <xs:element name="environment" type="xs:string" />
+            <xs:element name="region" type="xs:string" minOccurs="0" />
+            <xs:element name="schedule" type="iics:ScheduleType" minOccurs="0" />
+            <xs:element name="dependencies" type="iics:DependenciesType" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Schedule Type -->
+    <xs:complexType name="ScheduleType">
+        <xs:sequence>
+            <xs:element name="cron" type="xs:string" minOccurs="0" />
+            <xs:element name="timezone" type="xs:string" minOccurs="0" />
+        </xs:sequence>
+
+        <xs:attribute name="type" type="xs:string" />
+    </xs:complexType>
+
+    <!-- Dependencies Type -->
+    <xs:complexType name="DependenciesType">
+        <xs:sequence>
+            <xs:element name="dependency" type="xs:string" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>

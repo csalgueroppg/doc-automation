@@ -1,27 +1,11 @@
-<#-- 
-IICS Process Documentation Template
-Variable available:
-- processName: String 
-- processType: String
-- version: String 
-- description: String 
-- author: String 
-- created: LocalDate
-- modified: LocalDate
-- connections: List<Connection>
-- transformations: List<Transformation>
-- openApiEndpoints: List<OpenAPIEndpoints>
-- dataFlow: DataFlow
-- processFlowDiagram: String (Mermaid Code)
-- apiDiagram: String (Mermaid Code)
-- generatedAt: LocalDateTime
--->
+<#-- Enhanced markdown template with smart tag support -->
 ---
 title: ${processName}
 description: ${description!'IICS Process Documentation'}
 author: ${author!'Unknown'}
-version: ${version!'1.0'}
-generated: ${generatedAt}
+version: ${version!'1.0.0'}
+generated: ${generatedAt?string('yyyy-MM-dd HH:mm:ss')}
+tags_enabled: true
 ---
 
 # ${processName}
@@ -30,24 +14,23 @@ generated: ${generatedAt}
 
 **Process Type**: ${processType}
 **Version**: ${version}
+
+<#-- Smart tag example: Reference the process element -->
+[iics:xpath](${sourceFile}#//process/@name "Process Name Reference")
+
 <#if description??>**Description**: ${description}</#if>
-<#if created??>**Created**: ${created}</#if>
-<#if modified??>**Last Modified**: ${modified}</#if>
+<#if author??>**Author**: ${author}</#if>
 
 ---
 
-## Table of Contents 
+## Table of Contents
 
 - [Overview](#overview)
 <#if processFlowDiagram??>- [Process Flow Diagram](#process-flow-diagram)</#if>
 <#if connections?? && (connections?size > 0)>- [Connections](#connections)</#if>
 <#if transformations?? && (transformations?size > 0)>- [Transformations](#transformations)</#if>
-<#if dataFlow??>- [Data Flow](#data-flow)</#if>
-<#if openApiEndpoints?? && (openApiEndpoints?size > 0)>- [API Endpoints](#api-endpoints)</#if>
-<#if apiDiagram??>- [API Sequence Diagram](#api-sequence-diagram)</#if>
-- [Technical Details](#technical-details)
-
---- 
+<#if dataFlow??>- [DataFlow](#dataflow)</#if>
+<#if openApiEndpoints?? && (openApiEndpoints?size > 0)>- [API Endpoints](#open-api-endpoints)</#if>
 
 <#if processFlowDiagram??>
 ## Process Flow Diagram 
@@ -57,29 +40,38 @@ transformations and decision points.
 
 ${processFlowDiagram}
 
+<#-- Smart tag: Reference to source data flow definition -->
+[iics:xpath](${sourceFile}#//dataFlow "Data Flow Definition")
+
 ---
+
 </#if>
-
 <#if connections?? && (connections?size > 0)>
-## Connections 
+## Connections
 
-This process uses the following connections to interact with external systems:
+This process uses the following connections:
 
 <#list connections as conn>
 ### ${conn.name}
 
+<#-- Smart tag: Reference to connection definition -->
+[iics:element](${sourceFile}#{conn.id} "Connection: ${conn.name}")
+
 - **Type**: ${conn.type}
-- **ID**: ${conn.id}
+- **ID**: `${conn.id}`
 <#if conn.url??>- **URL**: `${conn.url}`</#if>
 <#if conn.host??>- **Host**: `${conn.host}`</#if>
 <#if conn.database??>- **Database**: `${conn.database}`</#if>
-<#if conn.authenticationType??>- **Authentication**: ${conn.authenticationType}</#if>
+- **Authentication**: ${conn.authenticationType}
+
+<#-- Smart tag: Snippet of connection configuration -->
+[iics:snippet](${sourceFile}#connection[@id='${conn.id}'] "Connection Configuration")
 
 </#list>
 
----
-</#if>
+--- 
 
+</#if>
 <#if transformations?? && (transformations?size > 0)>
 ## Transformations 
 
@@ -87,6 +79,9 @@ The following transformations are applied to the data as it flows through the pr
 
 <#list transformations as trans>
 ### ${trans.name}
+
+<#-- Smart tag: Reference to transformation -->
+[iics:element](${sourceFile}#${trans.id} "Transformation: ${trans.name}")
 
 - **Type**: ${trans.type}
 - **ID**: ${trans.id}
@@ -101,6 +96,9 @@ The following transformations are applied to the data as it flows through the pr
 <#list trans.inputFields as field>
 | ${field.name} | ${field.type} | ${field.required?string('Yes', 'No')} |
 </#list>
+
+<#-- Smart tag: Reference to input fields -->
+[iics:xpath](${sourceFile}#//transformation[@id='${trans.id}']/inputFields "Input Fields Definition")
 </#if>
 
 <#if trans.outputFields?? && (trans.outputFields?size > 0)>
@@ -111,15 +109,19 @@ The following transformations are applied to the data as it flows through the pr
 <#list trans.outputFields as field>
 | ${field.name} | ${field.type} | ${field.required?string('Yes', 'No')} |
 </#list>
+
+[iics:xpath](${sourceFile}#//transformation[@id='${trans.id}']/outputFields "Output Fields Definition")
 </#if>
 
 </#list>
 
 ---
 </#if>
-
 <#if dataFlow??>
 ## Data Flow
+
+<#-- Smart tag: Reference to complete data flow -->
+[iics:xpath](${sourceFile}#//dataFlow "Complete Data Flow")
 
 This section describes the complete data lineage from source to target.
 
@@ -128,6 +130,8 @@ This section describes the complete data lineage from source to target.
 <#if dataFlow.source??>
 - **Connection**: ${dataFlow.source.connectionRef}
 - **Enity**: ${dataFlow.source.entity}
+
+[iics:snippet](${sourceFile}#//dataFlow/source "Source Configuration")
 </#if>
 
 ### Transformation Pipeline
@@ -145,18 +149,29 @@ ${transRef?counter}. ${transRef}
 <#if dataFlow.target??>
 - **Connection**: ${dataFlow.target.connectionRef}
 - **Entity**: ${dataFlow.target.entity}
+
+[iics:snippet](${sourceFile}#//dataFlow/target "Target Configuration")
 </#if>
 
 ---
-</#if>
 
+</#if>
 <#if openApiEndpoints?? && (openApiEndpoints?size > 0)>
 ## API Endpoints
+
+<#if apiDiagram??>
+### API Architecture Diagram
+
+${apiDiagram}
+</#if>
 
 This process exposes the following API endpoints:
 
 <#list openApiEndpoints as endpoint>
 ### ${endpoint.method} ${endpoint.path}
+
+<#-- Smart tag: Reference to endpoint definition -->
+[iics:xpath](${sourceFile}#//endpoint[@path='${endpoint.path}'][@method='${endpoint.method}'] "Endpoint Definition")
 
 <#if endpoint.summary??>**Summary**: ${endpoint.summary}</#if>
 <#if endpoint.operationId??>**Operation ID**: ${endpoint.operationId}</#if>
@@ -170,7 +185,12 @@ This process exposes the following API endpoints:
 <#list endpoint.parameters as param>
 | ${param.name} | ${param.in} | ${param.type} | ${param.required?string('Yes', 'No')} | ${param.description} |</#list>
 </#list>
+
+<#-- Smart tag: Refernece to parameters -->
+[iics:xpath](${sourceFile}#//endpoint[@path='${endpoint.path}']/parameters "Parameters Definition")
+
 </#if>
+
 
 <#if endpoint.responses??>
 **Responses**:
@@ -190,34 +210,3 @@ This process exposes the following API endpoints:
 
 ---
 </#if>
-
-<#if apiDiagram??>
-## API Sequence Diagram
-
-The following sequence diagram shows the interaction flow for the API endpoints:
-
-${apiDiagram}
-
----
-</#if>
-
-## Technical Details 
-
-### Metadata
-
-- **Process Name**: ${processName}
-- **Process Type**: ${processType}
-- **Version**: ${version}
-<#if author??>- **Author**: ${author}</#if>
-<#if created??>- **Created**: ${created}</#if>
-<#if modified??>- **Modified**: ${modified}</#if>
-
-### Generation Information
-
-- **Generated At**: ${generatedAt}
-- **Generated By**: IICS Documentation Generator v1.0
-
-## Notes 
-
-This document was automatically generated from IICS metadata. For questions or clarifications,
-please contact ${author!'the process owner'}.

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process name="SDasCustomerSync" type="CAI" version="1.0"
+    xmlns="http://informatica.com/iics">
+
+    <metadata>
+        <description>Customer synchronization process</description>
+        <author>John Doe</author>
+        <created>2024-01-15</created>
+        <modified>2024-03-20</modified>
+        <owner>Data Integration Team</owner>
+
+        <tags>
+            <tag>customer</tag>
+            <tag>sync</tag>
+            <tag>simple</tag>
+        </tags>
+    </metadata>
+
+    <connections>
+        <connection id="conn1" type="Salesforce" enabled="true">
+            <name>Salesforce Production</name>
+            <url>https://login.salesforce.com</url>
+            <authentication type="OAuth2" method="JWT" />
+        </connection>
+
+        <connection id="conn2" type="PostgreSQL" enabled="true">
+            <name>Customer Database</name>
+            <host>db.company.com</host>
+            <port>5432</port>
+            <database>customers</database>
+            <schema>public</schema>
+            <username>iics_users</username>
+            <authentication type="Password" />
+        </connection>
+    </connections>
+
+    <transformations>
+        <transformation id="trans1" type="Expression" enabled="true">
+            <name>Format Customer</name>
+            <description>Concatenate first and last name</description>
+            <expression>CONCAT(FirstName, ' ', LastName)</expression>
+
+            <inputFields>
+                <field name="FirstName" type="String" required="true" />
+                <field name="LastName" type="String" required="true" />
+            </inputFields>
+
+            <outputFields>
+                <field name="FullName" type="String" required="true" />
+            </outputFields>
+        </transformation>
+    </transformations>
+
+    <dataFlow name="CustomerSync" batchSize="1000">
+        <source>
+            <connectionRef>conn1</connectionRef>
+            <entity>Account</entity>
+            <query>SELECT Id, FirstName, LastName, Email FROM Account WHERE isActive = true</query>
+        </source>
+
+        <transformationRef>trans1</transformationRef>
+        <target>
+            <connectionRef>conn2</connectionRef>
+            <entity>customers</entity>
+            <operations>INSERT</operations>
+        </target>
+    </dataFlow>
+
+</process>

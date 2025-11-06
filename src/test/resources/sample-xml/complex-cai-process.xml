@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process name="EnterpriseDataPipeline" type="CDI" version="2.1"
+    schemaVersion="1.0"
+    xmlns="http://informatica.com/iics">
+
+    <metadata>
+        <description>Complex enterprise data integration pipeline with multiple sources and
+            transformations</description>
+        <author>Jane Smith</author>
+        <created>2023-06-01</created>
+        <modified>2024-11-05</modified>
+        <owner>Enterprise Data Team</owner>
+
+        <tags>
+            <tag>enterprise</tag>
+            <tag>etl</tag>
+            <tag>multi-source</tag>
+            <tag>production</tag>
+        </tags>
+    </metadata>
+
+    <connections>
+        <!-- Source Connection -->
+        <connection id="conn_oracle_erp" type="Oracle" enabled="true">
+            <name>Oracle ERP Production</name>
+            <host>erp-db.company.com</host>
+            <port>1521</port>
+            <database>PROD</database>
+            <schema>ERP_SCHEMA</schema>
+            <username>iics_read</username>
+            <authentication type="Password" method="Database" />
+
+            <properties>
+                <property name="connectionTimeout" type="int">30</property>
+                <property name="fetchSize" type="int">5000</property>
+                <property name="enableSSL" type="boolean">true</property>
+            </properties>
+        </connection>
+
+        <connection id="conn_sqlserver_crm" type="SQLServer" enabled="true">
+            <name>SQL Server CRM</name>
+            <host>crm-db.company.ppg</host>
+            <port>1433</port>
+            <database>CRM_PROD</database>
+            <schema>dbo</schema>
+            <username>iics_service</username>
+            <authentication type="Windows" method="NLTM" />
+
+            <properties>
+                <property name="encrypt" type="boolean">true</property>
+                <property name="trustServerCertificate" type="boolean">false</property>
+            </properties>
+        </connection>
+
+        <connection id="conn_s3_datalake" type="AmazonS3" enabled="true">
+            <name>Data Lake S3</name>
+            <url>s3://company-datalake/raw/</url>
+            <authentication type="IAMRole" method="AssumeRole" />
+
+            <properties>
+                <property name="region" type="string">us-east-1</property>
+                <property name="encryption" type="string">AES256</property>
+            </properties>
+        </connection>
+
+        <!-- Target Connections -->
+        <connection id="conn_snowflake_dw" type="Snowflake" enabled="true">
+            <name>Snowflake Data Warehouse</name>
+            <host>company.snowflakecomputing.com</host>
+            <database>ANALYTICS_DW</database>
+            <schema>ENTERPRISE</schema>
+            <username>iics_loader</username>
+            <authentication type="KeyPair" method="RSA" />
+
+            <properties>
+                <property name="warehouse" type="string">COMPUTE_WH</property>
+                <property name="role" type="string">DATA_LOADER</property>
+                <property name="sessionParameters" type="string">QUERY_TAG=IICS_LOAD</property>
+            </properties>
+        </connection>
+
+        <connection id="conn_redshift_analytics" type="Redshift" enabled="true">
+            <name>Redshift Analytics</name>
+            <host>analytics-cluster.us-east-1.redshift.amazonaws.com</host>
+            <port>5439</port>
+            <database>analytics</database>
+            <schema>public</schema>
+            <username>iics_writer</username>
+            <authentication type="Password" />
+        </connection>
+    </connections>
+
+    <transformations>
+        <!-- Data Quality Transformations -->
+         <transformation id="trans_validate_email" type="Validation" enabled="true">
+            <name>Validate Email Addresses</name>
+            <description>Validates email format using regex pattern</description>
+            <expression>REGEXP_LIKE(Email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$')</expression>
+
+            <inputFields>
+                <field name="Email" type="String" required="true" length="255">
+                    <description>Customer email address</description>
+                </field>
+            </inputFields>
+
+            <outputFields>
+                <field name="Email" type="String" required="true" />
+                <field name="IsValidEmail" type="Boolean" required="true">
+                    <defaultValue>false</defaultValue>
+                </field>
+            </outputFields>
+
+            <errorHandling onError="CONTINUE" logErrors="true" />
+         </transformation>
+
+         <transformation id="trans_cleanup_phone" type="Expression" enabled="true">
+            <name>Cleanse Phone Numbers</name>
+            <description>Standardizes phone number format to E.164</description>
+            <expression>REGEXP_REPLACE(Phone, '[^0-9]', '')</expression>
+
+            <inputFields>
+                <field name="Phone" type="String" required="false" length="50" />
+                <field name="CountryCode" type="String" required="false">
+                    <defaultValue>+1</defaultValue>
+                </field>
+            </inputFields>
+
+            <outputFields>
+                <field name="PhoneCleansed" type="String" required="false" length="20" />
+            </outputFields>
+         </transformation>
+
+         <transformation id="trans_enrich_customer" type="Lookup" enabled="true">
+            <name>Enrich Customer Data</name>
+            <description>Enriches customer record with demographic data</description>
+            
+            <inputFields>
+                <field name="CustomerId" type="Integer" required="true" />
+                <field name="PostalCode" type="String" required="false" length="10" />
+            </inputFields>
+
+            <outputFields>
+                <field name="CustomerId" type="Integer" required="true" />
+                <field name="PostalCode" type="String" required="false" />
+                <field name="City" type="String" required="false" length="100" />
+                <field name="State" type="String" required="false" length="50" />
+                <field name="Country" type="String" required="false" length="50" />
+                <field name="Latitute" type="Decimal" required="false" precision="10" scale="6" />
+                <field name="Longitude" type="Decimal" required="fallse" precision="10" scale="6" />
+            </outputFields>
+         </transformation>
+
+         <transformation id="trans_calculate_ltv" type="Expression" enabled="true">
+            <name>Calculate Customer Lifetime Value</name>
+            <description>Calculates customer LTV based on purchase history</description>
+            <expression>TotalPurchases * AvgOrderValue * (CustomerTenurDays / 365.0) * 0.85</expression>
+
+            <inputFields>
+                <field name="TotalPurchases" type="Integer" required="true" />
+                <field name="AvgOrderValue" type="Decimal" required="true" precision="10" scale="2" />
+                <field name="CustomerTenurDays" type="Integer" required="true" />
+            </inputFields>
+
+            <outputFields>
+                <field name="LifetimeValue" type="Decimal" required="true" precision="12" scale="2" />
+                <field name="LTVCategory" type="String" required="true" length="20">
+                    <description>HIGH, MEDIUM, LOW based on LTV</description>
+                </field>
+            </outputFields>
+         </transformation>
+
+         <transformation id="trans_dedup_customers" type="Aggregator" enabled="true">
+            <name>Deduplicate CUstomers</name>
+            <description>Removes duplicate customer records based on email</description>
+            
+            <inputFields>
+                <field name="Email" type="String" required="true" />
+                <field name="CreatedDate" type="DateTime" required="true" />
+                <field name="CustomerId" type="Integer" required="true" />
+            </inputFields>
+
+            <outputFields>
+                <field name="Email" type="String" required="true" />
+                <field name="CustomerId" type="Integer" required="true">
+                    <description>Most recent customer ID for this email</description>
+                </field>
+                <field name="DuplicateCount" type="Integer" required="true" />
+            </outputFields>
+         </transformation>
+
+         <transformation id="trans_filter_active" type="Filter" enabled="true">
+            <name>Filter Active Customers</name>
+            <description>Filters for active customers with valid data</description>
+            <condition>IsActive = TRUE AND Email IS NOT NULL AND LastPurchaseDate > ADD_MONTHS(CURRENT_DATE, -12)</condition>
+         
+            <inputFields>
+                <field name="IsActive" type="Boolean" required="true" />
+                <field name="Email" type="String" required="false" />
+                <field name="LastPurchaseDate" type="Date" required="false" />
+            </inputFields>
+
+            <outputFields>
+                <field name="CustomerId" type="Integer" required="true" />
+                <field name="Email" type="String" required="true" />
+                <field name="IsActive" type="Boolean" required="true" />
+            </outputFields>
+        </transformation>
+
+        <transformation id="trans_join_orders" type="Joiner" enabled="true">
+            <name>Join Customer with Orders</name>
+            <description>Joins customer data with order history</description>
+
+            <inputFields>
+                <field name="CustomerId" type="Integer" required="true" />
+                <field name="OrderId" type="Integer" required="true" />
+            </inputFields>
+
+            <outputFields>
+                <field name="CustomerId" type="Integer" required="true" />
+                <field name="CustomerName" type="String" required="true" length="200" />
+                <field name="Email" type="String" required="true" length="255" />
+                <field name="OrderId" type="Integer" required="true" />
+                <field name="OrderDate" type="Date" required="true" />
+                <field name="OrderAmount" type="Decimal" required="true" precision="10" scale="2" />
+            </outputFields>
+        </transformation>
+    </transformations>
+
+    <dataFlow name="CustomerOrdersIntegration" batchSize="5000">
+        <source>
+            <connectionRef>conn_oracle_erp</connectionRef>
+            <entity>CUSTOMERS</entity>
+            <query>
+                SELECT
+                    customer_id,
+                    first_name,
+                    last_name,
+                    email,
+                    phone,
+                    postal_code,
+                    is_active,
+                    created_date,
+                    last_purchase_date
+                FROM customers
+                WHEN modified_date >= SYSDATE - 1
+            </query>
+
+            <fields>
+                <field name="customer_id" type="Integer" required="true" />
+                <field name="first_name" type="String" required="true" length="100" />
+                <field name="last_name" type="String" required="true" length="100" />
+                <field name="email" type="String" required="false" length="255" />
+                <field name="phone" type="String" required="false" length="255" />
+                <field name="postal_code" type="String" required="false" length="10" />
+                <field name="is_active" type="Boolean" required="true" />
+                <field name="created_date" type="DateTime" required="true" />
+                <field name="last_purchase_date" type="Date" required="false" />
+            </fields>
+        </source>
+
+        <transformationRef>trans_validate_email</transformationRef>
+        <transformationRef>trans_cleanse_phone</transformationRef>
+        <transformationRef>trans_filter_active</transformationRef>
+        <transformationRef>trans_enrich_customer</transformationRef>
+        <transformationRef>trans_dedup_customers</transformationRef>
+        <transformationRef>trans_join_orders</transformationRef>
+        <transformationRef>trans_calculate_ltv</transformationRef>
+
+        <target>
+            <connectionRef>conn_snowflake_dw</connectionRef>
+            <entity>DIM_CUSTOMER</entity>
+            <operation>UPSERT</operation>
+
+            <fields>
+                <field name="customer_key" type="Integer" required="true" />
+                <field name="customer_id" type="Integer" required="true" />
+                <field name="full_name" type="String" required="true" length="200" />
+                <field name="email" type="String" required="true" length="255" />
+                <field name="phone_e164" type="String" required="false" length="20" />
+                <field name="city" type="String" required="false" length="100" />
+                <field name="state" type="String" required="false" length="50" />
+                <field name="country" type="String" required="false" length="50" />
+                <field name="lifetime_value" type="Decimal" required="false" precision="12" scale="2" />
+                <field name="ltv_category" type="String" required="false" length="20" />
+                <field name="is_active" type="Boolean" required="true" />
+                <field name="created_date" type="DateTime" required="true" />
+                <field name="updated_date" type="DateTime" required="true" />
+            </fields>
+        </target>
+
+        <filter type="WHERE">is_active = TRUE</filter>
+
+        <mappings>
+            <mapping source="customer_id" target="customer_id" />
+            <mapping source="FullName" target="full_name" transformation="trans_format_name" />
+            <mapping source="Email" target="email" />
+            <mapping source="PhoneE164" target="phone_e164" />
+            <mapping source="City" target="city" />
+            <mapping source="State" target="state" />
+            <mapping source="Country" target="country" />
+            <mapping source="LifetimeValue" target="lifetime_value" />
+            <mapping source="LTVCategory" target="ltv_category" />
+            <mapping source="is_active" target="is_active" />
+            <mapping source="created_date" target="created_date" />
+        </mappings>
+    </dataFlow>
+
+    <errorHandling>
+        <strategy type="CONNECTION_FAILURE" maxRetries="3">
+            <description>Retry connection failures with exponential backoff</description>
+            <action>RETRY_WITH_BACKOFF</action>
+        </strategy>
+
+        <strategy type="TRANSFORMATION_ERROR" maxRetries="0">
+            <description>Log transformation errors and continue processing</description>
+            <action>LOG_AND_CONTINUE</action>
+        </strategy>
+
+        <strategy type="DATA_QUALITY" maxRetries="0">
+            <description>Route bad records to error table</description>
+            <action>ROUTE_TO_ERROR_TABLE</action>
+        </strategy>
+
+        <logging level="INFO" destination="CloudWatch" />
+
+        <notification onError="true" onSuccess="failure">
+            <email>data-team@company.com</email>
+            <email>ops@company.com</email>
+        </notification>
+    </errorHandling>
+
+    <performance>
+        <avgExecutionTime>45 minutes</avgExecutionTime>
+        <peakLoadCapacity>10M records/hour</peakLoadCapacity>
+        <recommendedBatchSize>5000</recommendedBatchSize>
+        <parallelism>8</parallelism>
+    </performance>
+
+    <deployment>
+        <environment>Production</environment>
+        <region>us-east-1</region>
+
+        <schedule type="CRON">
+            <cron>0 2 * * *</cron>
+            <timezone>America/New_York</timezone>
+        </schedule>
+
+        <dependencies>
+            <dependency>DIM_CUSTOMER_HISTORY</dependency>
+            <dependency>REF_GEOGRAPHY</dependency>
+            <dependency>STG_ORDERS</dependency>
+        </dependencies>
+    </deployment>
+
+</process>

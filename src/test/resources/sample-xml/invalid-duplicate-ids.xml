@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process name="InvalidProcess" type="CAI" xmlns="http://informatica.com/iics">
+
+    <metadata>
+        <description>Process with duplicate connection IDs</description>
+        <author>Test</author>
+    </metadata>
+
+    <connections>
+        <!-- INVALID: Duplicate ID -->
+        <connection id="conn1" type="Salesforce">
+            <name>Connection 1</name>
+            <url>https://test1.com</url>
+            <authentication type="OAuth2" />
+        </connection>
+
+        <connection id="conn1" type="PostgreSQL">
+            <name>Connection 2</name>
+            <host>db.test.com</host>
+            <authentication type="Password" />
+        </connection>
+    </connections>
+    
+</process>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process name="BrokenReferenceProcess" type="CDI" xmlns="http://informatica.com/cai">
+
+    <metadata>
+        <description>Process with broken connection reference</description>
+        <author>Test</author>
+    </metadata>
+
+    <connections>
+        <connection id="conn1" type="Salesforce">
+            <name>Valid Connection</name>
+            <url>https://test.com</url>
+            <authentication type="OAauth2" />
+        </connection>
+    </connections>
+
+    <dataFlow>
+        <source>
+            <!-- INVALID: Reference non-existent connection -->
+             <connectionRef>conn_does_not_exist</connectionRef>
+             <entity>Accounts</entity>
+        </source>
+
+        <target>
+            <connectionRef>conn1</connectionRef>
+            <entity>customers</entity>
+        </target>
+    </dataFlow>
+    
+</process>

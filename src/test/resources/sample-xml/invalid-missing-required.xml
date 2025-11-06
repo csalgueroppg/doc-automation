@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process type="CAI" xmlns="http://informatica.com/iics">
+    <!-- INVALID: Missing required 'name' attribute -->
+
+    <metadata>
+        <description>This should fail validation</description>
+    </metadata>
+</process>

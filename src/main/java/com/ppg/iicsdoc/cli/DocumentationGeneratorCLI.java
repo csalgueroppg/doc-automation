@@ -1,5 +1,6 @@
 package com.ppg.iicsdoc.cli;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -17,8 +18,14 @@ import com.ppg.iicsdoc.model.deployment.DeploymentConfig;
 import com.ppg.iicsdoc.model.deployment.DeploymentResult;
 import com.ppg.iicsdoc.model.domain.ParsedMetadata;
 import com.ppg.iicsdoc.model.markdown.MarkdownDocument;
+import com.ppg.iicsdoc.model.tags.TagVerificationResult;
+import com.ppg.iicsdoc.model.tags.TaggedDocument;
 import com.ppg.iicsdoc.model.validation.SchemaValidationResult;
 import com.ppg.iicsdoc.parser.XMLParserService;
+import com.ppg.iicsdoc.tags.TagManagementService;
+import com.ppg.iicsdoc.tags.TagParser;
+import com.ppg.iicsdoc.tags.TagRenderer;
+import com.ppg.iicsdoc.tags.TagVerifier;
 import com.ppg.iicsdoc.validation.BusinessRulesValidation;
 import com.ppg.iicsdoc.validation.SchemaValidator;
 import com.ppg.iicsdoc.validation.report.ValidationReportExporter;
@@ -93,6 +100,10 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
     private final XMLValidationService xmlValidationService;
     private final ValidationReportGenerator validationReportGenerator;
     private final ValidationReportExporter validationExporter;
+    private final TagParser tagParser;
+    private final TagVerifier tagVerifier;
+    private final TagRenderer tagRenderer;
+    private final TagManagementService tagManagementService;
 
     public DocumentationGeneratorCLI(
             XMLParserService xmlParser,
@@ -112,6 +123,11 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         Configuration freemarkerConfig = new Configuration(new Version("2.32.0"));
         this.validationReportGenerator = new ValidationReportGenerator(freemarkerConfig);
         this.validationExporter = new ValidationReportExporter(validationReportGenerator);
+
+        this.tagParser = new TagParser();
+        this.tagVerifier = new TagVerifier();
+        this.tagRenderer = new TagRenderer();
+        this.tagManagementService = new TagManagementService(tagParser, tagVerifier, tagRenderer);
     }
 
     public static void main(String[] args) {
@@ -185,10 +201,10 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
                 log.info("Validation report exported to: {}", args.getReportOutput());
             } else {
                 reportFile = validationExporter.export(
-                    validationResult,
-                    Paths.get(args.getReportOutput()),
-                    format);
-                
+                        validationResult,
+                        Paths.get(args.getReportOutput()),
+                        format);
+
                 log.info("Validation report exported to: {}", reportFile.toAbsolutePath());
             }
         } else {
@@ -225,10 +241,28 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         }
 
         log.info("Generating markdown documentation");
-        MarkdownDocument document = markdownGenerator.generate(
-                metadata,
-                processFlowDiagram,
-                apiDiagram);
+        MarkdownDocument document;
+
+        if (args.renderTags()) {
+            document = markdownGenerator.generateWithTags(metadata, processFlowDiagram, apiDiagram);
+            log.info("Documentation generated with smart tags");
+        } else {
+            document = markdownGenerator.generate(metadata, processFlowDiagram, apiDiagram);
+            log.info("Documentation generated");
+        }
+
+        if (args.getTagReport() != null) {
+            TaggedDocument taggedDoc = tagParser.parse(
+                document.getFilename(),
+                document.getContent());
+
+            TagVerificationResult tagResult = tagVerifier.verify(taggedDoc);
+            String tagReport = tagManagementService.generateReport(tagResult);
+            Path reportPath = Paths.get(args.getTagReport());
+
+            Files.writeString(reportPath, tagReport);
+            log.info("Tag verification report exported to: {}", reportPath);
+        }
 
         log.info("  Document: {} ({} bytes)", document.getFilename(), document.getSize());
         log.info("Deploying documentation");
@@ -294,6 +328,12 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
                 cliArgs.setReportFormat(arg.substring("--report-format=".length()));
             } else if (arg.startsWith("--report-output=")) {
                 cliArgs.setReportOutput(arg.substring("--report-output=".length()));
+            } else if (arg.startsWith("--verify-tags=")) {
+                cliArgs.setVerifyTags(Boolean.parseBoolean(arg.substring("--verify-tags=".length())));
+            } else if (arg.startsWith("--render-tags=")) {
+                cliArgs.setRenderTags(Boolean.parseBoolean(arg.substring("--render-tags=".length())));
+            } else if (arg.startsWith("--tag-report=")) {
+                cliArgs.setTagReport(arg.substring("--tag-report=".length()));
             }
         }
 
@@ -328,16 +368,23 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         System.out.println("Usage: java -jar iics-doc-gen.jar [OPTIONS]");
         System.out.println();
         System.out.println("Options:");
-        System.out.println("  --input=FILE    Path to IICS XML metadata file (required)");
-        System.out.println("  --output=DIR    Output directory for generated documentation");
-        System.out.println("                  (default: from application.yml)");
-        System.out.println("  --help, -h      Show this help message");
+        System.out.println("  --input=FILE        Path to IICS XML metadata file (required)");
+        System.out.println("  --output=DIR        Output directory for generated documentation");
+        System.out.println("                      (default: from application.yml)");
+        System.out.println("  --help, -h          Show this help message");
+        System.out.println("  --verify-tags=BOOL  Verify documentation tags (default: true)");
+        System.out.println("  --render-tags=BOOL  Render tags in documentation (default: true)");
+        System.out.println("  --tag-report=FILE   Export tag verification report");
         System.out.println();
         System.out.println("Examples:");
         System.out.println("  java -jar iics-doc-gen.jar --input=process.xml");
         System.out.println("  java -jar iics-doc-gen.jar --input=process.xml --output=./docs");
-        System.out.println("  java -jar iics-doc-gen.jar --input=process.xml --report-format=html --report-output=./reports");
-        System.out.println("  java -jar iics-doc-gen.jar --input=process.xml --report-format=all --report-output=./reports");
+        System.out.println(
+                "  java -jar iics-doc-gen.jar --input=process.xml --report-format=html --report-output=./reports");
+        System.out.println(
+                "  java -jar iics-doc-gen.jar --input=process.xml --report-format=all --report-output=./reports");
+        System.out.println("  java -jar iics-doc-gen.jar --input=process.xml --tag-report=tag-report.md");
+        System.out.println("  java -jar iics-doc-gen.jar --input=process.xml --render-tags=false");
         System.out.println();
         System.out.println("Environment Variables:");
         System.out.println("  AI_API_KEY       API key for diagram generation");
@@ -380,6 +427,15 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         /** Output path for the report */
         private String reportOutput;
 
+        /** Whether to verify the tags collected from the metadata file. */
+        private boolean verifyTags = true;
+
+        /** Whether to render tags in the final document. */
+        private boolean renderTags = true;
+
+        /** Tag report output */
+        private String tagReport;
+
         /**
          * Returns the input file path.
          *
@@ -401,10 +457,46 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         /**
          * Returns the selected output format for validation reports.
          * 
-         * @return The selected format option 
+         * @return The selected format option
          */
         public String getReportFormat() {
             return reportFormat;
+        }
+
+        /**
+         * Returns the output directory path.
+         *
+         * @return the output directory path, or {@code null} if not specified
+         */
+        public String getOutputDir() {
+            return this.outputDir;
+        }
+
+        /**
+         * Whether to verify tags from the metadata file.
+         * 
+         * @return {@code true} if verification is on, {@code false} otherwise
+         */
+        public boolean verifyTags() {
+            return this.verifyTags;
+        }
+
+        /**
+         * Whether to render tags in the final document.
+         * 
+         * @return {@code true} if the tags are being rendered, {@code false} otherwise
+         */
+        public boolean renderTags() {
+            return this.renderTags;
+        }
+
+        /**
+         * Gets the tag report content
+         * 
+         * @return tag report content
+         */
+        public String getTagReport() {
+            return this.tagReport;
         }
 
         /**
@@ -414,15 +506,6 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
          */
         public void setInputFile(String inputFile) {
             this.inputFile = inputFile;
-        }
-
-        /**
-         * Returns the output directory path.
-         *
-         * @return the output directory path, or {@code null} if not specified
-         */
-        public String getOutputDir() {
-            return outputDir;
         }
 
         /**
@@ -485,6 +568,33 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
          */
         public void setReportOutput(String reportOutput) {
             this.reportOutput = reportOutput;
+        }
+
+        /**
+         * Sets the flag to either verify tags or not.
+         * 
+         * @param verifyTags boolean value for tag verification
+         */
+        public void setVerifyTags(boolean verifyTags) {
+            this.verifyTags = verifyTags;
+        }
+
+        /**
+         * Sets the render tag boolean to a new value.
+         * 
+         * @param renderTags boolean value for either rendering tags or not
+         */
+        public void setRenderTags(boolean renderTags) {
+            this.renderTags = renderTags;
+        }
+
+        /**
+         * Sets the tag report output
+         * 
+         * @param tagReport Tag report content to be set
+         */
+        public void setTagReport(String tagReport) {
+            this.tagReport = tagReport;
         }
     }
 }
