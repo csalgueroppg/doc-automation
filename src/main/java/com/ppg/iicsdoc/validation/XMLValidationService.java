@@ -6,10 +6,12 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.ppg.iicsdoc.metrics.PerformanceMetricsService;
 import com.ppg.iicsdoc.model.validation.SchemaValidationResult;
 import com.ppg.iicsdoc.model.validation.ValidationError;
 import com.ppg.iicsdoc.model.validation.ValidationMetrics;
 import com.ppg.iicsdoc.model.validation.ValidationWarning;
+import com.ppg.iicsdoc.validation.cache.ValidationCacheService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,6 +68,11 @@ public class XMLValidationService {
     /**  */
     private final WellFormednessValidator wellFormednessValidator;
 
+    /**  */
+    private final ValidationCacheService cacheService;
+
+    private PerformanceMetricsService metricsService;
+
     /**
      * Constructs a new {@code XMLValidationService} with the provided
      * validators.
@@ -77,10 +84,13 @@ public class XMLValidationService {
     public XMLValidationService(
             SchemaValidator schemaValidator,
             BusinessRulesValidation businessRulesValidator,
-            WellFormednessValidator wellFormednessValidator) {
+            WellFormednessValidator wellFormednessValidator,
+            ValidationCacheService cacheService) {
         this.schemaValidator = schemaValidator;
         this.businessRulesValidator = businessRulesValidator;
         this.wellFormednessValidator = wellFormednessValidator;
+        this.cacheService = cacheService;
+        this.metricsService = new PerformanceMetricsService();
     }
 
     /**
@@ -104,10 +114,63 @@ public class XMLValidationService {
      * @return a {@code SchemaValidationResult} containing all errors and warnings
      */
     public SchemaValidationResult validateComplete(Path xmlFile) {
-        log.info("Starting complete validation for: {}", xmlFile.getFileName());
+        return metricsService.time("validation.complete", () -> {
+            SchemaValidationResult cached = cacheService.getCached(xmlFile);
+            if (cached != null) {
+                return cached;
+            }
 
+            log.info("Starting complete validation for: {}", xmlFile.getFileName());
+            long startTime = System.currentTimeMillis();
+            SchemaValidationResult wellFormednessResult = wellFormednessValidator.validate(
+                    xmlFile,
+                    WellFormednessValidator.Mode.STRICT);
+
+            if (!wellFormednessResult.isValid()) {
+                log.error("XML is not well-formed, skipping further validation");
+                return wellFormednessResult;
+            }
+
+            SchemaValidationResult schemaResult = schemaValidator.validate(xmlFile);
+            if (!schemaResult.isValid()) {
+                log.warn("Schema validation failed with {} errors", schemaResult.getErrorCount());
+            }
+
+            SchemaValidationResult businessRulesResult = businessRulesValidator.validate(xmlFile);
+            SchemaValidationResult combinedResult = combineResults(
+                    wellFormednessResult,
+                    schemaResult,
+                    businessRulesResult);
+
+            long duration = System.currentTimeMillis() - startTime;
+            log.info("Complete validation finished in {} ms. Valid: {}, Errors: {}, Warnings: {}",
+                    duration,
+                    combinedResult.isValid(),
+                    combinedResult.getErrorCount(),
+                    combinedResult.getWarningCount());
+
+            combinedResult.setMetrics(ValidationMetrics.builder()
+                    .validationDurationMs(duration)
+                    .wellFormed(true)
+                    .build());
+
+            cacheService.cache(xmlFile, combinedResult);
+            return combinedResult;
+        });
+    }
+
+    /**
+     * 
+     * 
+     * @param xmlFile
+     * @return
+     */
+    public SchemaValidationResult validateCompleteNoCache(Path xmlFile) {
+        log.info("Starting complete validation for: {}", xmlFile.getFileName());
         long startTime = System.currentTimeMillis();
-        SchemaValidationResult wellFormednessResult = wellFormednessValidator.validate(xmlFile, WellFormednessValidator.Mode.STRICT);
+        SchemaValidationResult wellFormednessResult = wellFormednessValidator.validate(
+                xmlFile,
+                WellFormednessValidator.Mode.STRICT);
 
         if (!wellFormednessResult.isValid()) {
             log.error("XML is not well-formed, skipping further validation");
@@ -133,9 +196,9 @@ public class XMLValidationService {
                 combinedResult.getWarningCount());
 
         combinedResult.setMetrics(ValidationMetrics.builder()
-            .validationDurationMs(duration)
-            .wellFormed(true)
-            .build());
+                .validationDurationMs(duration)
+                .wellFormed(true)
+                .build());
 
         return combinedResult;
     }
@@ -154,7 +217,8 @@ public class XMLValidationService {
     public SchemaValidationResult validateQuick(Path xmlFile) {
         log.info("Starting quick validation for: {}", xmlFile.getFileName());
 
-        SchemaValidationResult wellFormednessResult = wellFormednessValidator.validate(xmlFile, WellFormednessValidator.Mode.STRICT);
+        SchemaValidationResult wellFormednessResult = wellFormednessValidator.validate(xmlFile,
+                WellFormednessValidator.Mode.STRICT);
         if (wellFormednessResult.isValid()) {
             return wellFormednessResult;
         }

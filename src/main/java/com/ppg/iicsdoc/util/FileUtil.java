@@ -146,7 +146,7 @@ public class FileUtil {
         int exp = (int) (Math.log(bytes) / Math.log(1024));
         String pre = "KMGTPE".charAt(exp - 1) + "";
 
-        return String.format("%.1f %sB", bytes / Math.pow(1024, exp), pre);
+        return "%.1f %sB".formatted(bytes / Math.pow(1024, exp), pre);
     }
 
     /**

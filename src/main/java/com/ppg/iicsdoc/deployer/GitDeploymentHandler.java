@@ -179,9 +179,8 @@ public class GitDeploymentHandler implements DeploymentHandler {
             if (config.isAutoCommit() && !deployedFiles.isEmpty()) {
                 String commitMessage = config.getCommitMessage() != null
                         ? config.getCommitMessage()
-                        : String.format(
-                                "docs: Add documentation for %d processes",
-                                deployedFiles.size());
+                        : "docs: Add documentation for %d processes".formatted(
+                        deployedFiles.size());
 
                 git.commit()
                         .setMessage(commitMessage)

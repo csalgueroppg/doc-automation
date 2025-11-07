@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +21,7 @@ import com.ppg.iicsdoc.validation.BusinessRulesValidation;
 import com.ppg.iicsdoc.validation.SchemaValidator;
 import com.ppg.iicsdoc.validation.WellFormednessValidator;
 import com.ppg.iicsdoc.validation.XMLValidationService;
+import com.ppg.iicsdoc.validation.cache.ValidationCacheService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,18 +43,20 @@ class DocumentGenerationIntegrationTest {
         WellFormednessValidator wellFormednessValidator = new WellFormednessValidator();
         SchemaValidator schemaValidator = new SchemaValidator();
         BusinessRulesValidation businessRulesValidator = new BusinessRulesValidation();
+        ValidationCacheService cacheService = new ValidationCacheService();
 
         XMLValidationService validationService = new XMLValidationService(
                 schemaValidator,
                 businessRulesValidator,
-                wellFormednessValidator);
+                wellFormednessValidator, 
+                cacheService);
 
         parserService = new XMLParserService(validationService);
     }
 
     @Test
     void shouldGenerateCompleteDocumentation() throws Exception {
-        Path xmlFile = Paths.get("src/test/resources/sample-xml/cai-process.xml");
+        Path xmlFile = Path.of("src/test/resources/sample-xml/cai-process.xml");
 
         log.info("Step 1: Parsing XML file");
         ParsedMetadata metadata = parserService.parse(xmlFile);
@@ -82,7 +84,7 @@ class DocumentGenerationIntegrationTest {
         assertTrue(content.contains("```mermaid"));
 
         log.info("Step 4: Write to file");
-        Path outputPath = Paths.get("target", document.getFilename());
+        Path outputPath = Path.of("target", document.getFilename());
         Files.writeString(outputPath, content);
 
         log.info("Document written to: {}", outputPath.toAbsolutePath());

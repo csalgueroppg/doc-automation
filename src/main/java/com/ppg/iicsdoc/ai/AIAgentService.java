@@ -3,7 +3,6 @@ package com.ppg.iicsdoc.ai;
 import java.time.Duration;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -18,16 +17,17 @@ import com.ppg.iicsdoc.model.ai.MermaidDiagram;
 import com.ppg.iicsdoc.model.common.ValidationResult;
 import com.ppg.iicsdoc.model.domain.ParsedMetadata;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Service for interacting with the AI agent to generate diagrams based on the 
+ * Service for interacting with the AI agent to generate diagrams based on the
  * provided parsed metadata ({@link ParsedMetadata}) object.
  * 
  * <p>
- * This service constructs prompts, calls the AI API, processes responses, and 
- * validates the generated diagrams. It supports generating process flow and 
+ * This service constructs prompts, calls the AI API, processes responses, and
+ * validates the generated diagrams. It supports generating process flow and
  * API endpoint diagrams in Mermaid format.
  * </p>
  * 
@@ -84,7 +84,8 @@ public class AIAgentService {
      *         object.
      * @throws AIServiceException if there is an error during diagram generation
      */
-    @Retry(name = "aiService", fallbackMethod = "generateDiagramFallback")
+    @CircuitBreaker(name = "aiService", fallbackMethod = "generateDiagramFallback")
+    @Retry(name = "aiService")
     public MermaidDiagram generateProcessFlowDiagram(ParsedMetadata metadata) {
         log.info("Generating process flow diagram for: {}", metadata.getProcessName());
         long startTime = System.currentTimeMillis();
@@ -186,7 +187,8 @@ public class AIAgentService {
      * @return cleaned diagram code
      * @throws AIServiceException if the diagram code is invalid
      */
-    @Retry(name = "aiService", fallbackMethod = "generateDiagramFallback")
+    @CircuitBreaker(name = "aiService", fallbackMethod = "generateDiagramFallback")
+    @Retry(name = "aiService")
     public MermaidDiagram generateApiEndpointDiagram(ParsedMetadata metadata) {
         log.info("Generating API endpoint diagram for: {}", metadata.getProcessName());
         String prompt = promptBuilder.buildAPIEndpointPrompt(metadata);
@@ -259,11 +261,12 @@ public class AIAgentService {
     private MermaidDiagram generateDiagramFallback(ParsedMetadata metadata, Exception e) {
         log.error("All retries exhausted for diagram generation", e);
         String fallbackCode = String.format(
-                "flowchart TD\n" +
-                        "   Start[%s]\n" +
-                        "   Error[Diagram Generation Failed]\n" +
-                        "   Start --> Error\n" +
-                        "   style Error fill:#f99,stroke:#f00",
+                """
+                        flowchart TD
+                           Start[%s]
+                           Error[Diagram Generation Failed]
+                           Start --> Error
+                           style Error fill:#f99,stroke:#f00""",
                 metadata.getProcessName());
 
         return MermaidDiagram.builder()

@@ -3,13 +3,12 @@ package com.ppg.iicsdoc.testutils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 
 public class TestDataGenerator {
    
     public static void main(String[] args) throws IOException {
-        Path testResourcesDir = Paths.get("src/test/resources/sample-xml-generated");
+        Path testResourcesDir = Path.of("src/test/resources/sample-xml-generated");
         Files.createDirectories(testResourcesDir);
 
         generateMinimalProcess(testResourcesDir);
@@ -45,26 +44,26 @@ public class TestDataGenerator {
 
         xml.append("<connections>\n");
         for (int i = 1; i <= 50; i++) {
-            xml.append(String.format("<connection id=\"conn%d\" type=\"Database\">\n", i));
-            xml.append(String.format("<name>Connection %d</name>\n", i));
-            xml.append(String.format("<host>db%d.example.com</host>\n", i));
-            xml.append(String.format("<port>5432</port>\n"));
-            xml.append(String.format("<database>db_%d</database>", i));
+            xml.append("<connection id=\"conn%d\" type=\"Database\">\n".formatted(i));
+            xml.append("<name>Connection %d</name>\n".formatted(i));
+            xml.append("<host>db%d.example.com</host>\n".formatted(i));
+            xml.append("<port>5432</port>\n".formatted());
+            xml.append("<database>db_%d</database>".formatted(i));
             xml.append("<authentication type=\"Password\" />\n");
             xml.append("</connection>\n");
         }
 
         xml.append("</connections>\n").append("<transformations>\n");
         for (int i = 1; i <= 100; i++) {
-            xml.append(String.format("<transformation id=\"trans%d\" type=\"Expression\">\n", i));
-            xml.append(String.format("<name>Transformation %d</name>", i));
-            xml.append(String.format("<description>Generated transformation %d</description>\n", i));
-            xml.append(String.format("<expression>FIELD_%d * 2</expression>\n", i));
+            xml.append("<transformation id=\"trans%d\" type=\"Expression\">\n".formatted(i));
+            xml.append("<name>Transformation %d</name>".formatted(i));
+            xml.append("<description>Generated transformation %d</description>\n".formatted(i));
+            xml.append("<expression>FIELD_%d * 2</expression>\n".formatted(i));
             xml.append("<inputFields>");
-            xml.append(String.format("<field name=\"FIELD_%d\" type=\"Integer\" required=\"true\" />\n", i));
+            xml.append("<field name=\"FIELD_%d\" type=\"Integer\" required=\"true\" />\n".formatted(i));
             xml.append("</inputFields>");
             xml.append("<outputFields>");
-            xml.append(String.format("<field name=\"RESULT_%d\" type=\"Integer\" required=\"true\" />\n", i));
+            xml.append("<field name=\"RESULT_%d\" type=\"Integer\" required=\"true\" />\n".formatted(i));
             xml.append("</outputFields>");
             xml.append("</transformation>");
         }
@@ -88,26 +87,26 @@ public class TestDataGenerator {
         
         xml.append("<transformations>\n");
         for (int i = 1; i <= 20; i++) {
-            xml.append(String.format("<transformation id=\"trans%d\" type=\"Expression\">\n", i));
-            xml.append(String.format("<name>Step %d</name>\n", i));
-            xml.append(String.format("<description>Processing step %d in the chain</description>\n", i));
+            xml.append("<transformation id=\"trans%d\" type=\"Expression\">\n".formatted(i));
+            xml.append("<name>Step %d</name>\n".formatted(i));
+            xml.append("<description>Processing step %d in the chain</description>\n".formatted(i));
 
             if (i == 1) {
                 xml.append("<expression>INPUT_VALUE</expression>");
             } else {
-                xml.append(String.format("<expression>PREV_VALUE_%d + %d</expression>", i, i));
+                xml.append("<expression>PREV_VALUE_%d + %d</expression>".formatted(i, i));
             }
 
             xml.append("<inputFields>\n");
             if (i == 1) {
                 xml.append("<field name=\"INPUT_VALUE\" type=\"Integer\" required=\"true\"/>\n");
             } else {
-                xml.append(String.format("<field name=\"PREV_VALUE_%d\" type=\"Integer\" required=\"true\"/>\n", i));
+                xml.append("<field name=\"PREV_VALUE_%d\" type=\"Integer\" required=\"true\"/>\n".formatted(i));
             }
 
             xml.append("</inputFields>\n");
             xml.append("<outputFields>\n");
-            xml.append(String.format("<field name=\"PREV_VALUE_%d\" type=\"Integer\" required=\"true\"/>\n", i));
+            xml.append("<field name=\"PREV_VALUE_%d\" type=\"Integer\" required=\"true\"/>\n".formatted(i));
             xml.append("</outputFields>\n");
             xml.append("</transformation>");
         }

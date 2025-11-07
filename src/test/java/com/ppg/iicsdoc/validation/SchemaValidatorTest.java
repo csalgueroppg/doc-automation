@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +26,7 @@ public class SchemaValidatorTest {
 
     @Test
     void shouldValidateValidXML() throws Exception {
-        Path validXml = Paths.get("src/test/resources/sample-xml/cai-process.xml");
+        Path validXml = Path.of("src/test/resources/sample-xml/cai-process.xml");
         SchemaValidationResult result = validator.validate(validXml);
 
         assertTrue(result.isValid());

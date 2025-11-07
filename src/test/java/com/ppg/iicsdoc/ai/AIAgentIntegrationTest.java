@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -44,7 +43,7 @@ class AIAgentIntegrationTest {
 
     @Test
     void shouldGenerateDiagramFromRealXML() throws Exception {
-        Path xmlFile = Paths.get("/src/test/resources/sample-xml/simple-cai-process.xml");
+        Path xmlFile = Path.of("/src/test/resources/sample-xml/simple-cai-process.xml");
         ParsedMetadata metadata = xmlParserService.parse(xmlFile);
         MermaidDiagram diagram = aiAgentService.generateProcessFlowDiagram(metadata);
 
@@ -58,7 +57,7 @@ class AIAgentIntegrationTest {
 
     @Test
     void shouldGenerateAPIEndpointDiagram() throws Exception {
-        Path xmlFile = Paths.get("/src/test/resources/sample-xml/api-endpoint-process.xml");
+        Path xmlFile = Path.of("/src/test/resources/sample-xml/api-endpoint-process.xml");
         ParsedMetadata metadata = xmlParserService.parse(xmlFile);
         MermaidDiagram diagram = aiAgentService.generateApiEndpointDiagram(metadata);
 

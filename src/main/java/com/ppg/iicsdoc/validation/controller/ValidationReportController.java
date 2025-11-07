@@ -46,8 +46,8 @@ public class ValidationReportController {
      */
     @PostMapping("/validate")
     public ResponseEntity<String> validate(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "format", defaultValue = "json") String format) {
+            @RequestParam MultipartFile file,
+            @RequestParam(defaultValue = "json") String format) {
         log.info("Received validation request for file: {}", file.getOriginalFilename());
 
         try {
@@ -76,8 +76,8 @@ public class ValidationReportController {
      */
     @PostMapping("/validate-download")
     public ResponseEntity<byte[]> validateAndDownload(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "format", defaultValue = "html") String format) {
+            @RequestParam MultipartFile file,
+            @RequestParam(defaultValue = "html") String format) {
         log.info("Received validation download request for file: {}", file.getOriginalFilename());
 
         try {
@@ -112,7 +112,7 @@ public class ValidationReportController {
     @GetMapping("/report/{fileId}")
     public ResponseEntity<String> getReport(
             @PathVariable String fieldId,
-            @RequestParam(value = "format", defaultValue = "html") String format) {
+            @RequestParam(defaultValue = "html") String format) {
         return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
                 .body("Report retrieval not yet implemented");
     }

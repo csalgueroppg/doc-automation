@@ -12,11 +12,24 @@ spring:
     deserialization:
       fail-on-unknown-properties: false
 
+server:
+  compression:
+    enabled: true 
+    mime-types:
+      - application/json
+      - application/xml
+      - text/html
+      - text/xml
+      - text/plain
+      - text/css
+      - application/javascript
+    min-response-size: 1024
+
 # Logging configuration
 logging:
   level:
     root: INFO
-    com.ppg.iicsdoc: DEBUG
+    com.ppg.iicsdocs: DEBUG
 
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
@@ -57,10 +70,14 @@ resilience4j:
   circuitbreaker:
     instances:
       aiService:
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 30s
-        permitted-number-of-calls-in-half-open-state: 3
+        register-health-indicator: true
         sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        wait-duration-in-open-state: 10s
+        failure-rate-threshold: 50
+        event-consumer-buffer-size: 10
 
   timelimiter:
     instances:
@@ -76,4 +93,4 @@ management:
 
     endpoint:
       health:
-        show-details: when-authorized
+        show-details: always 

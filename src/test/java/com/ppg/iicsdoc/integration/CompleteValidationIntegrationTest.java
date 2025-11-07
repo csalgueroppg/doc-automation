@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +29,7 @@ public class CompleteValidationIntegrationTest {
 
     @Test
     void shouldValidateSimpleCAIProcess() {
-        Path xmlFile = Paths.get("src/test/resources/sample-xml/cai-process.xml");
+        Path xmlFile = Path.of("src/test/resources/sample-xml/cai-process.xml");
         SchemaValidationResult result = validationService.validateComplete(xmlFile);
 
         assertTrue(result.isValid(), "Simple CAI process should be valid");
@@ -39,7 +38,7 @@ public class CompleteValidationIntegrationTest {
 
     @Test
     void shouldValidateComplexCDIProcess() {
-        Path xmlFile = Paths.get("src/test/resources/sample-xml/complex-cdi-process.xml");
+        Path xmlFile = Path.of("src/test/resources/sample-xml/complex-cdi-process.xml");
         SchemaValidationResult result = validationService.validateComplete(xmlFile);
 
         assertTrue(result.isValid(), "Complex CDI process should be valid");
@@ -49,7 +48,7 @@ public class CompleteValidationIntegrationTest {
 
     @Test
     void shouldValidateAPIGatewayProcess() {
-        Path xmlFile = Paths.get("src/test/resources/sample-xml/api-gateway-cai-process.xml");
+        Path xmlFile = Path.of("src/test/resources/sample-xml/api-gateway-cai-process.xml");
         SchemaValidationResult result = validationService.validateComplete(xmlFile);
 
         assertTrue(result.isValid());
@@ -58,7 +57,7 @@ public class CompleteValidationIntegrationTest {
 
     @Test
     void shouldRejectInvalidMissingRequired() {
-        Path xmlFile = Paths.get("src/test/resources/sample-xml/invalid-missing-required.xml");
+        Path xmlFile = Path.of("src/test/resources/sample-xml/invalid-missing-required.xml");
         SchemaValidationResult result = validationService.validateComplete(xmlFile);
 
         assertFalse(result.isValid());
@@ -68,7 +67,7 @@ public class CompleteValidationIntegrationTest {
 
     @Test
     void shouldDetectDuplicateIds() {
-        Path xmlFile = Paths.get("src/test/resources/sample-xml/invalid-duplicate-ids.xml");
+        Path xmlFile = Path.of("src/test/resources/sample-xml/invalid-duplicate-ids.xml");
         SchemaValidationResult result = validationService.validateComplete(xmlFile);
 
         assertFalse(result.isValid());
@@ -77,7 +76,7 @@ public class CompleteValidationIntegrationTest {
 
     @Test
     void shouldDetectBrokenReference() {
-        Path xmlFile = Paths.get("src/test/resources/sample-xml/invalid-broken-reference.xml");
+        Path xmlFile = Path.of("src/test/resources/sample-xml/invalid-broken-reference.xml");
         SchemaValidationResult result = validationService.validateComplete(xmlFile);
 
         assertFalse(result.isValid());
@@ -86,7 +85,7 @@ public class CompleteValidationIntegrationTest {
 
     @Test
     void shouldParseAfterValidation() {
-        Path xmlFile = Paths.get("src/test/resources/sample-xml/complex-cdi-process.xml");
+        Path xmlFile = Path.of("src/test/resources/sample-xml/complex-cdi-process.xml");
         SchemaValidationResult validationResult = validationService.validateComplete(xmlFile);
         assertTrue(validationResult.isValid());
 
@@ -100,7 +99,7 @@ public class CompleteValidationIntegrationTest {
 
     @Test
     void shouldHandleLargeFiles() {
-        Path xmlFile = Paths.get("src/test/resources/sample-xml-generated/large-process.xml");
+        Path xmlFile = Path.of("src/test/resources/sample-xml-generated/large-process.xml");
 
         long startTime = System.currentTimeMillis();
         SchemaValidationResult result = validationService.validateComplete(xmlFile);
@@ -113,9 +112,9 @@ public class CompleteValidationIntegrationTest {
     @Test
     void shouldRejectAllInvalidFiles() {
         Path[] invalidFiles = {
-                Paths.get("src/test/resources/sample-xml/invalid-missing-required.xml"),
-                Paths.get("src/test/resources/sample-xml/invalid-duplicate-ids.xml"),
-                Paths.get("src/test/resources/sample-xml/invalid-broken-reference.xml")
+                Path.of("src/test/resources/sample-xml/invalid-missing-required.xml"),
+                Path.of("src/test/resources/sample-xml/invalid-duplicate-ids.xml"),
+                Path.of("src/test/resources/sample-xml/invalid-broken-reference.xml")
         };
 
         for (Path file : invalidFiles) {

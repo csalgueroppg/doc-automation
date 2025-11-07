@@ -399,8 +399,8 @@ public class MarkdownGeneratorService {
         section.append(String.format("⚠️ Outdated: %d\n", result.getOutdatedTags()));
         section.append(String.format("❌ Missing: %d\n", result.getMissingTags()));
         section.append(String.format("❌ Error: %d\n", result.getErrorTags()));
-        section.append(String.format("\n**Success Rate**: %.1f%%\n\n", 
-            result.getSuccessRate() * 100));
+        section.append("\n**Success Rate**: %.1f%%\n\n".formatted(
+                result.getSuccessRate() * 100));
 
         if (!result.getProblematicTags().isEmpty()) {
             section.append("### Issues Found\n\n");

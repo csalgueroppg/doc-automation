@@ -40,7 +40,7 @@ public class AppConfig {
      * @return a configured {@link WebClient} instance
      */
     @Bean
-    public WebClient webClient(WebClient.Builder builder) {
+    WebClient webClient(WebClient.Builder builder) {
         return builder
                 .codecs(configurer -> configurer
                         .defaultCodecs()
@@ -56,7 +56,7 @@ public class AppConfig {
      */
     @Bean
     @ConfigurationProperties(prefix = "iics.parser")
-    public ParserProperties parserProperties() {
+    ParserProperties parserProperties() {
         return new ParserProperties();
     }
 
@@ -68,7 +68,7 @@ public class AppConfig {
      */
     @Bean
     @ConfigurationProperties(prefix = "iics.ai")
-    public AIProperties aiProperties() {
+    AIProperties aiProperties() {
         return new AIProperties();
     }
 
@@ -80,7 +80,7 @@ public class AppConfig {
      */
     @Bean
     @ConfigurationProperties(prefix = "iics.deployment")
-    public DeploymentProperties deploymentProperties() {
+    DeploymentProperties deploymentProperties() {
         return new DeploymentProperties();
     }
 

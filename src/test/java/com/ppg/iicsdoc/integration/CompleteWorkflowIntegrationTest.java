@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -47,7 +46,7 @@ class CompleteWorkflowIntegrationTest {
         log.info("Starting Complete Workflow Integration Test");
 
         log.info("Step 1: Parsing XML file");
-        Path xmlFile = Paths.get("src/test/resources/sample-xml/cai-process.xml");
+        Path xmlFile = Path.of("src/test/resources/sample-xml/cai-process.xml");
         ParsedMetadata metadata = xmlParser.parse(xmlFile);
 
         assertNotNull(metadata);

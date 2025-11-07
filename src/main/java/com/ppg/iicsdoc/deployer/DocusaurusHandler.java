@@ -253,15 +253,17 @@ public class DocusaurusHandler implements DeploymentHandler {
         String categoryLabel = categoryName.substring(0, 1).toUpperCase() +
                 categoryName.substring(1).replace("-", " ");
 
-        String metadata = String.format(
-                "{\n" +
-                        "  \"label\": \"%s\",\n" +
-                        "  \"position\": 2,\n" +
-                        "  \"link\": {\n" +
-                        "    \"type\": \"generated-index\",\n" +
-                        "    \"description\": \"Auto generated IICS process documentation\"\n" +
-                        "  }\n" +
-                        "}",
+        String metadata = (
+                """
+                {
+                  "label": "%s",
+                  "position": 2,
+                  "link": {
+                    "type": "generated-index",
+                    "description": "Auto generated IICS process documentation"
+                  }
+                }\
+                """).formatted(
                 categoryLabel);
 
         Files.writeString(metadataFile, metadata);

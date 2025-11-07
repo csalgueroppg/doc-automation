@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,9 +26,9 @@ public class ValidationPerformanceTest {
     @Test
     void shouldValidateMultipleFilesInParallel() {
         Path[] files = {
-                Paths.get("src/test/resources/sample-xml/cai-process.xml"),
-                Paths.get("src/test/resources/sample-xml/complex-cdi-process.xml"),
-                Paths.get("src/test/resources/sample-xml/api-gateway-cai-process.xml")
+                Path.of("src/test/resources/sample-xml/cai-process.xml"),
+                Path.of("src/test/resources/sample-xml/complex-cdi-process.xml"),
+                Path.of("src/test/resources/sample-xml/api-gateway-cai-process.xml")
         };
 
         long startTime = System.currentTimeMillis();
@@ -47,7 +46,7 @@ public class ValidationPerformanceTest {
 
     @Test
     void shouldMeasureValidationOverhead() {
-        Path file = Paths.get("src/test/resources/sample-xml/complex-cdi-process.xml");
+        Path file = Path.of("src/test/resources/sample-xml/complex-cdi-process.xml");
         int iterations = 10;
 
         for (int i = 0; i < 3; i++) {
@@ -72,7 +71,7 @@ public class ValidationPerformanceTest {
 
     @Test 
     void shouldHandleMemoryEfficiently() {
-        Path largeFile = Paths.get("src/test/resources/sample-xml-generated/large-process.xml");
+        Path largeFile = Path.of("src/test/resources/sample-xml-generated/large-process.xml");
         Runtime runtime = Runtime.getRuntime();
         long memoryBefore = runtime.totalMemory() - runtime.freeMemory();
 

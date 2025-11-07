@@ -76,6 +76,10 @@ public class DeploymentService {
         this.deploymentProperties = deploymentProperties;
     }
 
+    public DeploymentResult deploy(MarkdownDocument document) {
+        return deploy(document, createDefaultConfig());
+    }
+
     /**
      * Deploys a single markdown document using the specified configuration.
      * 

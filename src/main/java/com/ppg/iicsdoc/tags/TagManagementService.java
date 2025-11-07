@@ -71,8 +71,8 @@ public class TagManagementService {
         report.append(String.format("- ⚠️ Outdated: %d\n", result.getOutdatedTags()));
         report.append(String.format("- ❌ Missing: %d\n", result.getMissingTags()));
         report.append(String.format("- ❌ Error: %d\n", result.getErrorTags()));
-        report.append(String.format("- **Success Rate**: %.1f%%\n\n", 
-            result.getSuccessRate() * 100));
+        report.append("- **Success Rate**: %.1f%%\n\n".formatted(
+                result.getSuccessRate() * 100));
 
         if (!result.isAllValid()) {
             report.append("## Issues\n\n");

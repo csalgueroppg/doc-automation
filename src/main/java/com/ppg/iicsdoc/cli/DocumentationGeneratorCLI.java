@@ -2,7 +2,6 @@ package com.ppg.iicsdoc.cli;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -37,6 +36,7 @@ import freemarker.template.Version;
 
 import com.ppg.iicsdoc.validation.WellFormednessValidator;
 import com.ppg.iicsdoc.validation.XMLValidationService;
+import com.ppg.iicsdoc.validation.cache.ValidationCacheService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -118,7 +118,8 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         this.xmlValidationService = new XMLValidationService(
                 new SchemaValidator(),
                 new BusinessRulesValidation(),
-                new WellFormednessValidator());
+                new WellFormednessValidator(), 
+                new ValidationCacheService());
 
         Configuration freemarkerConfig = new Configuration(new Version("2.32.0"));
         this.validationReportGenerator = new ValidationReportGenerator(freemarkerConfig);
@@ -187,7 +188,7 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
      * @throws Exception if any step in the pipeline fails
      */
     private void executePipeline(CLIArguments args) throws Exception {
-        Path inputFile = Paths.get(args.getInputFile());
+        Path inputFile = Path.of(args.getInputFile());
 
         log.info("Validating XML file");
         SchemaValidationResult validationResult = xmlValidationService.validateComplete(inputFile);
@@ -197,12 +198,12 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
             Path reportFile;
 
             if ("all".equalsIgnoreCase(args.getReportFormat())) {
-                validationExporter.exportAll(validationResult, Paths.get(args.getReportOutput()));
+                validationExporter.exportAll(validationResult, Path.of(args.getReportOutput()));
                 log.info("Validation report exported to: {}", args.getReportOutput());
             } else {
                 reportFile = validationExporter.export(
                         validationResult,
-                        Paths.get(args.getReportOutput()),
+                        Path.of(args.getReportOutput()),
                         format);
 
                 log.info("Validation report exported to: {}", reportFile.toAbsolutePath());
@@ -258,7 +259,7 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
 
             TagVerificationResult tagResult = tagVerifier.verify(taggedDoc);
             String tagReport = tagManagementService.generateReport(tagResult);
-            Path reportPath = Paths.get(args.getTagReport());
+            Path reportPath = Path.of(args.getTagReport());
 
             Files.writeString(reportPath, tagReport);
             log.info("Tag verification report exported to: {}", reportPath);

@@ -76,9 +76,12 @@ public class PromptBuilder {
         StringBuilder prompt = new StringBuilder();
 
         prompt.append(
-                "You are an expert at creating Mermaid diagrams for data" +
-                        "integration processes\n\nBased on the following IICS" +
-                        " (Informatica Intelligent Cloud Services)");
+                """
+                You are an expert at creating Mermaid diagrams for data\
+                integration processes
+                
+                Based on the following IICS\
+                 (Informatica Intelligent Cloud Services)""");
 
         prompt.append(metadata.getProcessType()).append(" process metadata, ");
         prompt.append("create a detailed mermaid flowchart diagram");
@@ -226,12 +229,18 @@ public class PromptBuilder {
 
         StringBuilder prompt = new StringBuilder();
         prompt.append(
-                "You are an expert at creating Mermaid diagrams for data" +
-                        "integration processes\n\nBased on the following IICS" +
-                        " (Informatica Intelligent Cloud Services)");
+                """
+                You are an expert at creating Mermaid diagrams for data\
+                integration processes
+                
+                Based on the following IICS\
+                 (Informatica Intelligent Cloud Services)""");
 
-        prompt.append("Based on the following OpenAPIEndpoints from an IICS process, " +
-                "create a Mermaid sequence diagram showing the API interactions.\n\n");
+        prompt.append("""
+                Based on the following OpenAPIEndpoints from an IICS process, \
+                create a Mermaid sequence diagram showing the API interactions.
+                
+                """);
 
         prompt.append("## Endpoints\n");
         for (OpenAPIEndpoint endpoint : metadata.getOpenApiEndpoints()) {
@@ -315,12 +324,18 @@ public class PromptBuilder {
 
         StringBuilder prompt = new StringBuilder();
         prompt.append(
-                "You are an expert at creating Mermaid diagrams for data" +
-                        "integration processes\n\nBased on the following IICS" +
-                        " (Informatica Intelligent Cloud Services)");
+                """
+                You are an expert at creating Mermaid diagrams for data\
+                integration processes
+                
+                Based on the following IICS\
+                 (Informatica Intelligent Cloud Services)""");
 
-        prompt.append("Based on the following data flow information, " +
-                "create a Mermaid flowchart showing the data lineage\n\n");
+        prompt.append("""
+                Based on the following data flow information, \
+                create a Mermaid flowchart showing the data lineage
+                
+                """);
 
         DataFlow flow = metadata.getDataFlow();
         prompt.append("## Data Lineage\n");

@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ppg.iicsdoc.model.validation.SchemaValidationResult;
@@ -35,7 +34,7 @@ public class ValidationReportExporter {
         Files.createDirectories(outputDir);
         String timestamp = LocalDateTime.now().format(FILE_TIMESTAMP);
         String extension = getFileExtension(format);
-        String fileName = String.format("validation-report_%s.%s", timestamp, extension);
+        String fileName = "validation-report_%s.%s".formatted(timestamp, extension);
         Path outputFile = outputDir.resolve(fileName);
         String content = reportGenerator.generate(result, format);
 

@@ -97,7 +97,7 @@ public class MarkdownUtil {
      * @return The formatted Markdown code block.
      */
     public static String codeBlock(String code, String language) {
-        return String.format("```%s\n%s\n```\n\n", language, code);
+        return "```%s\n%s\n```\n\n".formatted(language, code);
     }
 
     /**
@@ -214,12 +214,12 @@ public class MarkdownUtil {
      * @return The formatted Markdown badge.
      */
     public static String badge(String label, String value, String color) {
-        String url = String.format("https://img.shields.io/badge/%s-%s-%s",
+        String url = "https://img.shields.io/badge/%s-%s-%s".formatted(
                 label.replace(" ", "%20"),
                 value.replace(" ", "%20"),
                 color);
 
-        return String.format("![%s](%s)", label + ": " + value, url);
+        return "![%s](%s)".formatted(label + ": " + value, url);
     }
 
     /**
@@ -228,7 +228,7 @@ public class MarkdownUtil {
      * @param text The text to encode.
      * @return The URL-encoded text.
      */
-    private static String urlEncode(String text) {
+    public static String urlEncode(String text) {
         return text.replace(" ", "%20")
                 .replace("-", "--")
                 .replace("_", "__")

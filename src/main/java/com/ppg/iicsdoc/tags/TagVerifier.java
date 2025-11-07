@@ -1,11 +1,14 @@
 package com.ppg.iicsdoc.tags;
 
+import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -72,6 +75,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 public class TagVerifier {
+
+    private final Map<Path, String> hashCache = new HashMap<>();
 
     /**
      * Verifies all tags in the given document and returns a summary
@@ -168,6 +173,24 @@ public class TagVerifier {
     }
 
     /**
+     * 
+     * 
+     * @param file
+     * @return
+     * @throws Exception
+     */
+    public String getFileHashCached(Path file) throws Exception {
+        return hashCache.computeIfAbsent(file, f -> {
+            try {
+                return FileHasher.calculateFileHash(file);
+            } catch (Exception e) {
+                log.error("Error calculating hash", e);
+                return "";
+            }
+        });
+    }
+
+    /**
      * Verifies a file reference by comparing its hash.
      * 
      * @param tag      the tag to verify
@@ -195,26 +218,28 @@ public class TagVerifier {
      * @throws Exception if line extraction fails
      */
     private void verifyLineReference(Tag tag, Path filePath) throws Exception {
-        List<String> lines = Files.readAllLines(filePath);
-        TagReference ref = tag.getReference();
-
+        var ref = tag.getReference();
         if (ref.getStartLine() == null || ref.getEndLine() == null) {
             tag.setStatus(Tag.TagStatus.ERROR);
-            tag.setDescription("Invalid line range");
-
-            return;
-        }
-
-        if (ref.getStartLine() > lines.size() || ref.getEndLine() > lines.size()) {
-            tag.setStatus(Tag.TagStatus.ERROR);
-            tag.setDescription("Line range exceeds file length");
-
             return;
         }
 
         StringBuilder content = new StringBuilder();
-        for (int i = ref.getStartLine() - 1; i < ref.getEndLine(); i++) {
-            content.append(lines.get(1)).append("\n");
+        try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+            String line;
+            int lineNumber = 1;
+
+            while ((line = reader.readLine()) != null) {
+                if (lineNumber >= ref.getStartLine() && lineNumber <= ref.getEndLine()) {
+                    content.append(line).append("\n");
+                }
+
+                if (lineNumber > ref.getEndLine()) {
+                    break;
+                }
+
+                lineNumber++;
+            }
         }
 
         String actualContent = content.toString().trim();
@@ -227,7 +252,6 @@ public class TagVerifier {
             tag.setStatus(Tag.TagStatus.VALID);
         } else {
             tag.setStatus(Tag.TagStatus.OUTDATED);
-            tag.setDescription("Referenced lines have changed");
         }
     }
 

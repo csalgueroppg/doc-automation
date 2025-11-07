@@ -3,7 +3,7 @@ package com.ppg.iicsdoc.fixtures;
 public class CopilotStreamChunkFixtures {
 
     public static String validChunkJson(String content) {
-        return String.format("""
+        return """
                 {
                   "choices": [
                     {
@@ -13,7 +13,7 @@ public class CopilotStreamChunkFixtures {
                     }
                   ]
                 }
-                """, content);
+                """.formatted(content);
 
     }
 
