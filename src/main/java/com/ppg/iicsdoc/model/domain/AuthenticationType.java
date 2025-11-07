@@ -27,5 +27,17 @@ public enum AuthenticationType {
     API_KEY,
 
     /** JWT authentication using signed tokens for stateless auth */
-    JWT
+    JWT, 
+
+    /** Password access */
+    PASSWORD,
+
+    /** AWS IAM Role access */
+    IAMROLE,
+
+    /** Key-pair access */
+    KEYPAIR,
+
+    /**  */
+    WINDOWS
 }

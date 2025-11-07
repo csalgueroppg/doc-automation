@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process name="MinimalProcess" type="CAI" xmlns="http://informatica.com/iics">
+<metadata>
+<description>Minimal valid process</description>
+<author>Test Generator</author>
+<created>2025-11-07</created>
+</metadata>
+</process>

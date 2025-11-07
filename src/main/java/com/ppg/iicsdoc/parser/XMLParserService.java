@@ -99,34 +99,34 @@ public class XMLParserService {
 
         try {
             if (!Files.exists(xmlFile) || !Files.isReadable(xmlFile)) {
-                throw new ParsingException("Failed to parse XML file: File does" + 
-                    " not exist or is not readable" + xmlFile);
+                throw new ParsingException("Failed to parse XML file: File does" +
+                        " not exist or is not readable" + xmlFile);
             }
 
             log.info("Validating XML file");
             SchemaValidationResult validationResult = validationService.validateComplete(xmlFile);
 
             if (!validationResult.isValid()) {
-                log.error("XML validation failed with {} errors", 
-                    validationResult.getErrorCount());
+                log.error("XML validation failed with {} errors",
+                        validationResult.getErrorCount());
 
-                List<String> errorMessages = validationResult.getErrors().stream()  
-                    .map(e -> String.format("[%s] Line %d: %s", 
-                        e.getCode(), e.getLineNumber(), e.getMessage()))
-                    .toList();
+                List<String> errorMessages = validationResult.getErrors().stream()
+                        .map(e -> String.format("[%s] Line %d: %s",
+                                e.getCode(), e.getLineNumber(), e.getMessage()))
+                        .toList();
 
                 throw new ParsingException(
-                    "XML Validation failed",
-                    xmlFile.toString(),
-                    errorMessages);
+                        "XML Validation failed",
+                        xmlFile.toString(),
+                        errorMessages);
             }
 
             if (validationResult.hasWarnings()) {
-                log.warn("XML validation produced {} warnings", 
-                    validationResult.getWarningCount());
+                log.warn("XML validation produced {} warnings",
+                        validationResult.getWarningCount());
 
-                validationResult.getWarnings().forEach(w -> log.warn("  [{}] {}", 
-                    w.getCode(), w.getMessage()));
+                validationResult.getWarnings().forEach(w -> log.warn("  [{}] {}",
+                        w.getCode(), w.getMessage()));
             }
 
             FileUtil.validateFileReadable(xmlFile);
@@ -206,8 +206,13 @@ public class XMLParserService {
     private ParsedMetadata buildMetadata(Element root) {
         log.debug("Building metadata from root element: {}", root.getTagName());
 
+        String processName = root.getAttribute("name");
+        if (processName == null || processName.isBlank()) {
+            processName = root.getAttributeNS(null, "name");
+        }
+
         return ParsedMetadata.builder()
-                .processName(root.getAttribute("name"))
+                .processName(processName)
                 .processType(parseProcessType(root.getAttribute("type")))
                 .version(root.getAttribute("version"))
                 .description(getTextContent(root, "metadata/description"))

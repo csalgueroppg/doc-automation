@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<process name="SDasCustomerSync" type="CAI" version="1.0"
-    xmlns="http://informatica.com/iics">
+<process name="SDasCustomerSync" type="CAI" version="1.0">
 
     <metadata>
         <description>Customer synchronization process</description>
@@ -59,10 +58,11 @@
         </source>
 
         <transformationRef>trans1</transformationRef>
+
         <target>
             <connectionRef>conn2</connectionRef>
             <entity>customers</entity>
-            <operations>INSERT</operations>
+            <operation>INSERT</operation>
         </target>
     </dataFlow>
 

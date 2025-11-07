@@ -39,5 +39,17 @@ public enum ConnectionType {
     KAFKA,
 
     /** Any other connection type not explicitly listed. */
-    OTHER
+    OTHER, 
+
+    /** Oracle */
+    ORACLE,
+
+    /** SQL Server */
+    SQLSERVER,
+
+    /** Windows */
+    WINDOWS,
+    SNOWFLAKE,
+    REDSHIFT,
+    AMAZONS3
 }

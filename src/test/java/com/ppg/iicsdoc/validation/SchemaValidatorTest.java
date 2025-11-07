@@ -27,7 +27,7 @@ public class SchemaValidatorTest {
 
     @Test
     void shouldValidateValidXML() throws Exception {
-        Path validXml = Paths.get("src/test/resources/sample-xml/simple-cai-process.xml");
+        Path validXml = Paths.get("src/test/resources/sample-xml/cai-process.xml");
         SchemaValidationResult result = validator.validate(validXml);
 
         assertTrue(result.isValid());

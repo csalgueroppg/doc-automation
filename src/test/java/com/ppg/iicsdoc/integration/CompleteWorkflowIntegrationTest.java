@@ -47,7 +47,7 @@ class CompleteWorkflowIntegrationTest {
         log.info("Starting Complete Workflow Integration Test");
 
         log.info("Step 1: Parsing XML file");
-        Path xmlFile = Paths.get("src/test/resources/sample-xml/simple-cai-process.xml");
+        Path xmlFile = Paths.get("src/test/resources/sample-xml/cai-process.xml");
         ParsedMetadata metadata = xmlParser.parse(xmlFile);
 
         assertNotNull(metadata);

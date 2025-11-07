@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process name="LargeProcess" type="CDI" xmlns="http://informatica.com/iics">
+<metadata>
+<description>Process with complex nested transformations</description>
+<author>Test Generator</author>
+<created>2025-11-07</created>
+</metadata>
+<transformations>
+<transformation id="trans1" type="Expression">
+<name>Step 1</name>
+<description>Processing step 1 in the chain</description>
+<expression>INPUT_VALUE</expression><inputFields>
+<field name="INPUT_VALUE" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_1" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans2" type="Expression">
+<name>Step 2</name>
+<description>Processing step 2 in the chain</description>
+<expression>PREV_VALUE_2 + 2</expression><inputFields>
+<field name="PREV_VALUE_2" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_2" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans3" type="Expression">
+<name>Step 3</name>
+<description>Processing step 3 in the chain</description>
+<expression>PREV_VALUE_3 + 3</expression><inputFields>
+<field name="PREV_VALUE_3" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_3" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans4" type="Expression">
+<name>Step 4</name>
+<description>Processing step 4 in the chain</description>
+<expression>PREV_VALUE_4 + 4</expression><inputFields>
+<field name="PREV_VALUE_4" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_4" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans5" type="Expression">
+<name>Step 5</name>
+<description>Processing step 5 in the chain</description>
+<expression>PREV_VALUE_5 + 5</expression><inputFields>
+<field name="PREV_VALUE_5" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_5" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans6" type="Expression">
+<name>Step 6</name>
+<description>Processing step 6 in the chain</description>
+<expression>PREV_VALUE_6 + 6</expression><inputFields>
+<field name="PREV_VALUE_6" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_6" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans7" type="Expression">
+<name>Step 7</name>
+<description>Processing step 7 in the chain</description>
+<expression>PREV_VALUE_7 + 7</expression><inputFields>
+<field name="PREV_VALUE_7" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_7" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans8" type="Expression">
+<name>Step 8</name>
+<description>Processing step 8 in the chain</description>
+<expression>PREV_VALUE_8 + 8</expression><inputFields>
+<field name="PREV_VALUE_8" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_8" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans9" type="Expression">
+<name>Step 9</name>
+<description>Processing step 9 in the chain</description>
+<expression>PREV_VALUE_9 + 9</expression><inputFields>
+<field name="PREV_VALUE_9" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_9" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans10" type="Expression">
+<name>Step 10</name>
+<description>Processing step 10 in the chain</description>
+<expression>PREV_VALUE_10 + 10</expression><inputFields>
+<field name="PREV_VALUE_10" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_10" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans11" type="Expression">
+<name>Step 11</name>
+<description>Processing step 11 in the chain</description>
+<expression>PREV_VALUE_11 + 11</expression><inputFields>
+<field name="PREV_VALUE_11" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_11" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans12" type="Expression">
+<name>Step 12</name>
+<description>Processing step 12 in the chain</description>
+<expression>PREV_VALUE_12 + 12</expression><inputFields>
+<field name="PREV_VALUE_12" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_12" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans13" type="Expression">
+<name>Step 13</name>
+<description>Processing step 13 in the chain</description>
+<expression>PREV_VALUE_13 + 13</expression><inputFields>
+<field name="PREV_VALUE_13" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_13" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans14" type="Expression">
+<name>Step 14</name>
+<description>Processing step 14 in the chain</description>
+<expression>PREV_VALUE_14 + 14</expression><inputFields>
+<field name="PREV_VALUE_14" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_14" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans15" type="Expression">
+<name>Step 15</name>
+<description>Processing step 15 in the chain</description>
+<expression>PREV_VALUE_15 + 15</expression><inputFields>
+<field name="PREV_VALUE_15" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_15" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans16" type="Expression">
+<name>Step 16</name>
+<description>Processing step 16 in the chain</description>
+<expression>PREV_VALUE_16 + 16</expression><inputFields>
+<field name="PREV_VALUE_16" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_16" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans17" type="Expression">
+<name>Step 17</name>
+<description>Processing step 17 in the chain</description>
+<expression>PREV_VALUE_17 + 17</expression><inputFields>
+<field name="PREV_VALUE_17" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_17" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans18" type="Expression">
+<name>Step 18</name>
+<description>Processing step 18 in the chain</description>
+<expression>PREV_VALUE_18 + 18</expression><inputFields>
+<field name="PREV_VALUE_18" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_18" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans19" type="Expression">
+<name>Step 19</name>
+<description>Processing step 19 in the chain</description>
+<expression>PREV_VALUE_19 + 19</expression><inputFields>
+<field name="PREV_VALUE_19" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_19" type="Integer" required="true"/>
+</outputFields>
+</transformation><transformation id="trans20" type="Expression">
+<name>Step 20</name>
+<description>Processing step 20 in the chain</description>
+<expression>PREV_VALUE_20 + 20</expression><inputFields>
+<field name="PREV_VALUE_20" type="Integer" required="true"/>
+</inputFields>
+<outputFields>
+<field name="PREV_VALUE_20" type="Integer" required="true"/>
+</outputFields>
+</transformation></transformations>
+</process>

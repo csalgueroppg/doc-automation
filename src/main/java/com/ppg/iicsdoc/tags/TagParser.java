@@ -75,8 +75,9 @@ public class TagParser {
 
     /** Pattern used to identify tag annotations in document content. */
     private static final Pattern TAG_PATTERN = Pattern.compile(
-            "\\[iics:(\\w+)\\]\\(([^)\"]+)(?:\\s+\"([^\"]+)\"?\\)",
-            Pattern.MULTILINE);
+        "\\[iics:(\\w+)\\]\\(([^)\"]+)(?:\\s+\"([^\"]+)\"?)?\\)",
+        Pattern.MULTILINE);
+
 
     /**  */
     private static final SecureRandom secureRandom = new SecureRandom();

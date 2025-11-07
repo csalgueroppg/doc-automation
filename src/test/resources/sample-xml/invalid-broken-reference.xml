@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<process name="BrokenReferenceProcess" type="CDI" xmlns="http://informatica.com/cai">
+<process name="BrokenReferenceProcess" type="CDI">
 
     <metadata>
         <description>Process with broken connection reference</description>

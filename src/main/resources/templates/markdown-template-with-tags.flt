@@ -40,7 +40,6 @@ transformations and decision points.
 
 ${processFlowDiagram}
 
-<#-- Smart tag: Reference to source data flow definition -->
 [iics:xpath](${sourceFile}#//dataFlow "Data Flow Definition")
 
 ---
@@ -54,7 +53,6 @@ This process uses the following connections:
 <#list connections as conn>
 ### ${conn.name}
 
-<#-- Smart tag: Reference to connection definition -->
 [iics:element](${sourceFile}#{conn.id} "Connection: ${conn.name}")
 
 - **Type**: ${conn.type}
@@ -64,7 +62,6 @@ This process uses the following connections:
 <#if conn.database??>- **Database**: `${conn.database}`</#if>
 - **Authentication**: ${conn.authenticationType}
 
-<#-- Smart tag: Snippet of connection configuration -->
 [iics:snippet](${sourceFile}#connection[@id='${conn.id}'] "Connection Configuration")
 
 </#list>
@@ -80,7 +77,6 @@ The following transformations are applied to the data as it flows through the pr
 <#list transformations as trans>
 ### ${trans.name}
 
-<#-- Smart tag: Reference to transformation -->
 [iics:element](${sourceFile}#${trans.id} "Transformation: ${trans.name}")
 
 - **Type**: ${trans.type}
@@ -97,7 +93,6 @@ The following transformations are applied to the data as it flows through the pr
 | ${field.name} | ${field.type} | ${field.required?string('Yes', 'No')} |
 </#list>
 
-<#-- Smart tag: Reference to input fields -->
 [iics:xpath](${sourceFile}#//transformation[@id='${trans.id}']/inputFields "Input Fields Definition")
 </#if>
 
@@ -120,7 +115,6 @@ The following transformations are applied to the data as it flows through the pr
 <#if dataFlow??>
 ## Data Flow
 
-<#-- Smart tag: Reference to complete data flow -->
 [iics:xpath](${sourceFile}#//dataFlow "Complete Data Flow")
 
 This section describes the complete data lineage from source to target.
@@ -170,7 +164,6 @@ This process exposes the following API endpoints:
 <#list openApiEndpoints as endpoint>
 ### ${endpoint.method} ${endpoint.path}
 
-<#-- Smart tag: Reference to endpoint definition -->
 [iics:xpath](${sourceFile}#//endpoint[@path='${endpoint.path}'][@method='${endpoint.method}'] "Endpoint Definition")
 
 <#if endpoint.summary??>**Summary**: ${endpoint.summary}</#if>
@@ -183,14 +176,11 @@ This process exposes the following API endpoints:
 | Name | Location | Type | Required | Description |
 |------|----------|------|----------|-------------|
 <#list endpoint.parameters as param>
-| ${param.name} | ${param.in} | ${param.type} | ${param.required?string('Yes', 'No')} | ${param.description} |</#list>
+| ${param.name} | ${param.in} | ${param.type} | ${param.required?string('Yes', 'No')} | ${param.description} |
 </#list>
-
-<#-- Smart tag: Refernece to parameters -->
-[iics:xpath](${sourceFile}#//endpoint[@path='${endpoint.path}']/parameters "Parameters Definition")
-
 </#if>
 
+[iics:xpath](${sourceFile}#//endpoint[@path='${endpoint.path}']/parameters "Parameters Definition")
 
 <#if endpoint.responses??>
 **Responses**:

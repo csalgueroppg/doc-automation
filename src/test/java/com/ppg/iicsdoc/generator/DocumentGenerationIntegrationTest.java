@@ -54,13 +54,13 @@ class DocumentGenerationIntegrationTest {
 
     @Test
     void shouldGenerateCompleteDocumentation() throws Exception {
-        Path xmlFile = Paths.get("src/test/resources/sample-xml/simple-cai-process.xml");
+        Path xmlFile = Paths.get("src/test/resources/sample-xml/cai-process.xml");
 
         log.info("Step 1: Parsing XML file");
         ParsedMetadata metadata = parserService.parse(xmlFile);
 
         assertNotNull(metadata);
-        assertEquals("CustomerDataSync", metadata.getProcessName());
+        assertEquals("SDasCustomerSync", metadata.getProcessName());
 
         log.info("Step 2: Create mock diagram (in real scenario, this would add AI integration)");
         MermaidDiagram diagram = createMockDiagram();
@@ -111,7 +111,7 @@ class DocumentGenerationIntegrationTest {
         return MermaidDiagram.builder()
             .diagramCode(diagramCode)
             .type(MermaidDiagram.DiagramType.FLOWCHART)
-            .title("CustomerDataSync - Process Flow")
+            .title("SDasCustomerSync - Process Flow")
             .validated(true)
             .validationMessage("Valid")
             .build();

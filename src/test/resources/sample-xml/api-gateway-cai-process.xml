@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <process name="CustomerAPIGateway" type="CAI" version="3.0"
-    schemaVersion="1.0"
-    xmlns="http://informatica.com/iics">
+    schemaVersion="1.0">
 
     <metadata>
         <description>RESTful API gateway for customer management</description>

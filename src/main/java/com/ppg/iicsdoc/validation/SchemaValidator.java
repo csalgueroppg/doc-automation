@@ -63,7 +63,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SchemaValidator {
 
     /** Default schema path if none is explicitly provided */
-    private static final String DEFAULT_SCHEMA = "/schemas/iics-process-base.xsd";
+    private static final String DEFAULT_SCHEMA = "/schemas/iics-process-complete.xsd";
 
     /**
      * The {@link Schema} instance loaded from classpath that will be used for

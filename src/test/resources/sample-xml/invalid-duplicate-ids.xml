@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<process name="InvalidProcess" type="CAI" xmlns="http://informatica.com/iics">
+<process name="InvalidProcess" type="CAI">
 
     <metadata>
         <description>Process with duplicate connection IDs</description>

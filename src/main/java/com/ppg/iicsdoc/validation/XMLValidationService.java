@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.ppg.iicsdoc.model.validation.SchemaValidationResult;
 import com.ppg.iicsdoc.model.validation.ValidationError;
+import com.ppg.iicsdoc.model.validation.ValidationMetrics;
 import com.ppg.iicsdoc.model.validation.ValidationWarning;
 
 import lombok.extern.slf4j.Slf4j;
@@ -130,6 +131,11 @@ public class XMLValidationService {
                 combinedResult.isValid(),
                 combinedResult.getErrorCount(),
                 combinedResult.getWarningCount());
+
+        combinedResult.setMetrics(ValidationMetrics.builder()
+            .validationDurationMs(duration)
+            .wellFormed(true)
+            .build());
 
         return combinedResult;
     }

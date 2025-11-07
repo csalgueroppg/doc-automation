@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <process name="EnterpriseDataPipeline" type="CDI" version="2.1"
-    schemaVersion="1.0"
-    xmlns="http://informatica.com/iics">
+    schemaVersion="1.0">
 
     <metadata>
         <description>Complex enterprise data integration pipeline with multiple sources and
@@ -113,7 +112,7 @@
             <errorHandling onError="CONTINUE" logErrors="true" />
          </transformation>
 
-         <transformation id="trans_cleanup_phone" type="Expression" enabled="true">
+         <transformation id="trans_cleanse_phone" type="Expression" enabled="true">
             <name>Cleanse Phone Numbers</name>
             <description>Standardizes phone number format to E.164</description>
             <expression>REGEXP_REPLACE(Phone, '[^0-9]', '')</expression>
@@ -146,7 +145,7 @@
                 <field name="State" type="String" required="false" length="50" />
                 <field name="Country" type="String" required="false" length="50" />
                 <field name="Latitute" type="Decimal" required="false" precision="10" scale="6" />
-                <field name="Longitude" type="Decimal" required="fallse" precision="10" scale="6" />
+                <field name="Longitude" type="Decimal" required="false" precision="10" scale="6" />
             </outputFields>
          </transformation>
 
@@ -323,7 +322,7 @@
 
         <logging level="INFO" destination="CloudWatch" />
 
-        <notification onError="true" onSuccess="failure">
+        <notification onError="true" onSuccess="false">
             <email>data-team@company.com</email>
             <email>ops@company.com</email>
         </notification>

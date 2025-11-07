@@ -168,7 +168,7 @@ This process exposes the following API endpoints:
 | Name | Location | Type | Required | Description |
 |------|----------|------|----------|-------------|
 <#list endpoint.parameters as param>
-| ${param.name} | ${param.in} | ${param.type} | ${param.required?string('Yes', 'No')} | ${param.description} |</#list>
+| ${param.name} | ${param.in} | ${param.type} | ${param.required?string('Yes', 'No')} | ${param.description} |
 </#list>
 </#if>
 
@@ -190,6 +190,7 @@ This process exposes the following API endpoints:
 
 ---
 </#if>
+
 
 <#if apiDiagram??>
 ## API Sequence Diagram
