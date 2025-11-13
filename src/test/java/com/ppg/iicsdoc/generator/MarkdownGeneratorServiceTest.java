@@ -150,12 +150,6 @@ public class MarkdownGeneratorServiceTest {
     }
 
     @Test 
-    void shouldIncludeTableOfContents() {
-        MarkdownDocument document = markdownGenerator.generate(sampleMetadata, sampleDiagram);
-        assertTrue(document.getContent().contains("## Table of Contents"));
-    }
-
-    @Test 
     void shouldIncludeFrontMatter() {
         MarkdownDocument document = markdownGenerator.generate(sampleMetadata, sampleDiagram);
 

@@ -1,7 +1,10 @@
 package com.ppg.iicsdoc.cli;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -17,15 +20,20 @@ import com.ppg.iicsdoc.model.deployment.DeploymentConfig;
 import com.ppg.iicsdoc.model.deployment.DeploymentResult;
 import com.ppg.iicsdoc.model.domain.ParsedMetadata;
 import com.ppg.iicsdoc.model.markdown.MarkdownDocument;
+import com.ppg.iicsdoc.model.metadata.Metadata;
+import com.ppg.iicsdoc.model.metadata.MetadataTag;
 import com.ppg.iicsdoc.model.tags.TagVerificationResult;
 import com.ppg.iicsdoc.model.tags.TaggedDocument;
 import com.ppg.iicsdoc.model.validation.SchemaValidationResult;
+import com.ppg.iicsdoc.parser.MetadataTagParser;
 import com.ppg.iicsdoc.parser.XMLParserService;
+import com.ppg.iicsdoc.service.TagSuggestionService;
 import com.ppg.iicsdoc.tags.TagManagementService;
 import com.ppg.iicsdoc.tags.TagParser;
 import com.ppg.iicsdoc.tags.TagRenderer;
 import com.ppg.iicsdoc.tags.TagVerifier;
 import com.ppg.iicsdoc.validation.BusinessRulesValidation;
+import com.ppg.iicsdoc.validation.MetadataTagValidator;
 import com.ppg.iicsdoc.validation.SchemaValidator;
 import com.ppg.iicsdoc.validation.report.ValidationReportExporter;
 import com.ppg.iicsdoc.validation.report.ValidationReportGenerator;
@@ -104,6 +112,9 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
     private final TagVerifier tagVerifier;
     private final TagRenderer tagRenderer;
     private final TagManagementService tagManagementService;
+    private final MetadataTagParser metadataTagParser;
+    private final MetadataTagValidator metadataTagValidator;
+    private final TagSuggestionService tagSuggestionService;
 
     public DocumentationGeneratorCLI(
             XMLParserService xmlParser,
@@ -118,7 +129,7 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         this.xmlValidationService = new XMLValidationService(
                 new SchemaValidator(),
                 new BusinessRulesValidation(),
-                new WellFormednessValidator(), 
+                new WellFormednessValidator(),
                 new ValidationCacheService());
 
         Configuration freemarkerConfig = new Configuration(new Version("2.32.0"));
@@ -129,6 +140,9 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         this.tagVerifier = new TagVerifier();
         this.tagRenderer = new TagRenderer();
         this.tagManagementService = new TagManagementService(tagParser, tagVerifier, tagRenderer);
+        this.metadataTagParser = new MetadataTagParser();
+        this.metadataTagValidator = new MetadataTagValidator();
+        this.tagSuggestionService = new TagSuggestionService();
     }
 
     public static void main(String[] args) {
@@ -231,6 +245,23 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         log.info("  Type: {}", metadata.getProcessType());
         log.info("Generating diagram");
 
+         if (args.validateTags()) {
+            log.info("Validating metadata tags");
+
+            List<MetadataTag> tags = metadataTagParser.parseTags(metadata.getDescription());
+            MetadataTagValidator.TagValidationResult result = metadataTagValidator.validate(tags);
+
+            if (!result.isValid() || !result.getWarnings().isEmpty()) {
+                String report = metadataTagValidator.generateValidationReport(result);
+                System.out.println(report);
+
+                if (args.getTagReport() != null) {
+                    Files.writeString(Paths.get(args.getTagReport()), report);
+                    log.info("Tag validation report saved to: {}", args.getTagReport());
+                }
+            }
+        }
+
         MermaidDiagram processFlowDiagram = aiAgent.generateProcessFlowDiagram(metadata);
         log.info("  Process flow diagram generated");
 
@@ -254,8 +285,8 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
 
         if (args.getTagReport() != null) {
             TaggedDocument taggedDoc = tagParser.parse(
-                document.getFilename(),
-                document.getContent());
+                    document.getFilename(),
+                    document.getContent());
 
             TagVerificationResult tagResult = tagVerifier.verify(taggedDoc);
             String tagReport = tagManagementService.generateReport(tagResult);
@@ -316,7 +347,7 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
      * @param args the row command-line arguments
      * @return a populated {@link CLIArguments} instance
      */
-    private CLIArguments parseArguments(String[] args) {
+    private CLIArguments parseArguments(String[] args) throws IOException {
         CLIArguments cliArgs = new CLIArguments();
         for (String arg : args) {
             if (arg.startsWith("--input=")) {
@@ -335,6 +366,20 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
                 cliArgs.setRenderTags(Boolean.parseBoolean(arg.substring("--render-tags=".length())));
             } else if (arg.startsWith("--tag-report=")) {
                 cliArgs.setTagReport(arg.substring("--tag-report=".length()));
+            } else if (arg.startsWith("--validate-tags=")) {
+                cliArgs.setValidateTags(Boolean.parseBoolean(arg.substring("--validate-tags=".length())));
+            } else if (arg.startsWith("--show-tag-suggestions=")) {
+                cliArgs.setShowTagSuggestions(Boolean.parseBoolean(arg.substring("--show-tag-suggestions=".length())));
+            }
+        }
+
+        if (args[0].equals("tag-docs")) {
+            String output = tagSuggestionService.generateTagDocumentation();
+            if (args.length > 1) {
+                Files.writeString(Paths.get(args[1]), output);
+                System.out.println("Tag documentation exported to: " + args[1]);
+            } else {
+                System.out.println(output);
             }
         }
 
@@ -437,6 +482,12 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
         /** Tag report output */
         private String tagReport;
 
+        /** Wether to validate tags (similar to OpenAPISpec) */
+        private boolean validateTags = true;
+
+        /** Whether to show suggestions for missing or invalida tags */
+        private boolean showTagSuggestion = false;
+
         /**
          * Returns the input file path.
          *
@@ -498,6 +549,26 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
          */
         public String getTagReport() {
             return this.tagReport;
+        }
+
+        /**
+         * Returns whether to validate tags or not.
+         * 
+         * @return {@code true} if the tags are going to be validated, {@code false}
+         *         otherwise
+         */
+        public boolean validateTags() {
+            return validateTags;
+        }
+
+        /**
+         * Returns whether to show tag suggestions.
+         * 
+         * @return {@code true} if the suggestions are going to be shown to the user,
+         * {@code false} otherwise
+         */
+        public boolean showTagsSuggestion() {
+            return showTagSuggestion;
         }
 
         /**
@@ -596,6 +667,14 @@ public class DocumentationGeneratorCLI implements CommandLineRunner {
          */
         public void setTagReport(String tagReport) {
             this.tagReport = tagReport;
+        }
+
+        public void setValidateTags(boolean validateTags) {
+            this.validateTags = validateTags;
+        }
+
+        public void setShowTagSuggestions(boolean showTagsSuggestions) {
+            this.showTagSuggestion = showTagsSuggestions;
         }
     }
 }

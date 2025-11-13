@@ -2,7 +2,10 @@
 <process name="SDasCustomerSync" type="CAI" version="1.0">
 
     <metadata>
-        <description>Customer synchronization process</description>
+        <description>
+            @Purpose The purpose of this document is to describe the process for Shipment Download Integration for Wms Scale Implementation.
+            @SystemRequirements Load Balancer, Server running, IDK, IDK, IDK
+        </description>
         <author>John Doe</author>
         <created>2024-01-15</created>
         <modified>2024-03-20</modified>

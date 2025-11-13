@@ -26,6 +26,16 @@ generated: ${generatedAt}
 
 # ${processName}
 
+## Purpose 
+
+<#if purpose??>
+</#if>
+
+## System Requirements 
+
+<#if systemRequirements??>
+</#if>
+
 ## Overview 
 
 **Process Type**: ${processType}
@@ -35,19 +45,6 @@ generated: ${generatedAt}
 <#if modified??>**Last Modified**: ${modified}</#if>
 
 ---
-
-## Table of Contents 
-
-- [Overview](#overview)
-<#if processFlowDiagram??>- [Process Flow Diagram](#process-flow-diagram)</#if>
-<#if connections?? && (connections?size > 0)>- [Connections](#connections)</#if>
-<#if transformations?? && (transformations?size > 0)>- [Transformations](#transformations)</#if>
-<#if dataFlow??>- [Data Flow](#data-flow)</#if>
-<#if openApiEndpoints?? && (openApiEndpoints?size > 0)>- [API Endpoints](#api-endpoints)</#if>
-<#if apiDiagram??>- [API Sequence Diagram](#api-sequence-diagram)</#if>
-- [Technical Details](#technical-details)
-
---- 
 
 <#if processFlowDiagram??>
 ## Process Flow Diagram 

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<process name="CustomerDataIntegration" type="CDI" version="2.0">
+    <metadata>
+        <description>
+            @purpose Synchronize customer data between Salesforce and internal database
+            @summary Bi-directional sync with conflict resolution
+
+            This process handles real-time customer data synchronization between our
+            Salesforce CRM and the internal PostgreSQL database. It includes data 
+            validation, deduplication, and conflict resolution logic.
+
+            @system-requirements Salesforce API access, PostgreSQL 13+, Redis Cache
+            @prerequisites Valid API credentials, Network connectivity to SF, Database schema v2.0+
+            @dependencies CustomerValidationService, AddressStandardizationAPI, EmailVerificationService
+
+            @performance 10,000 records/hour
+            @sla 99.9% uptime, max 5 seconds per record
+            @scaling Horizontal scaling up to 10 instances
+            @capacity Max 1M records/day
+
+            @security SSL/TLS encryption, OAuth 2.0 authentication
+            @data-classification Confidential - PII included
+            @compliance GDPR, CCPA, SOC 2 Type II
+
+            @business-owner John Smith, VP of Sales
+            @stakeholders Sales Team, Customer Support, Data Analytics
+            @business-impact Critical - Affects customer service quality and sales operations
+
+            @monitoring CloudWatch, DataDot
+            @alerting PagerDuty on failures
+            @error-handling Retry 3 times with exponential backoff
+            @retry-policy Max 3 retries, 2^n seconds delay
+
+            @example See integration-examples/customer-sync-example.md
+            @see-also CustomerDeduplicationProcess, AddressValidationProcess
+            @since v2.0.0
+            @version 2.0.0
+        </description>
+
+        <author>Jane Developer</author>
+        <created>2024-01-15</created>
+        <modified>2024-11-10</modified>
+        <owner>Data Integration Team</owner>
+
+        <tags>
+            <tag>customer</tag>
+            <tag>salesforce</tag>
+            <tag>sync</tag>
+            <tag>real-time</tag>
+        </tags>
+    </metadata>
+
+    <connections>
+        <connection id="conn_salesforce" type="Salesforce">
+            <name>Salesforce Production</name>
+            <url>https://login.salesforce.com</url>
+            <authentication type="OAuth2" method="JWT" />
+        </connection> 
+
+        <connection id="conn_postgres" type="Database">
+            <name>Customer Database</name>
+            <host>db.company.com</host>
+            <port>5432</port>
+            <database>customers</database>
+            <authentication type="Password" />
+        </connection>
+    </connections>
+
+    <transformations>
+        <transformation id="trans_validate" type="Validation">
+            <name>Validate Customer Data</name>
+
+            <description>
+                @purpose Validate customer data quality before sync
+                @example Email format: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+                @error-handling Reject invalid records to error queue
+            </description>
+
+            <inputFields>
+                <field name="Email" type="String" required="true" />
+                <field name="Phone" type="String" required="false" />
+            </inputFields>
+
+            <outputFields>
+                <field name="IsValid" type="Boolean" required="true" />
+                <field name="ValidationErrors" type="String" required="false" />
+            </outputFields>
+        </transformation>
+    </transformations>
+
+    <dataFlow>
+        <source>
+            <connectionRef>conn_salesforce</connectionRef>
+            <entity>Account</entity>
+        </source>
+
+        <transformationRef>trans_validate</transformationRef>
+        <target>
+            <connectionRef>conn_postgres</connectionRef>
+            <entity>Customers</entity>
+        </target>
+    </dataFlow>
+
+</process>

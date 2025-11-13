@@ -12,6 +12,8 @@ import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
+import com.ppg.iicsdoc.model.domain.ParsedMetadata;
+import com.ppg.iicsdoc.model.metadata.MetadataTag;
 import com.ppg.iicsdoc.model.tags.Tag;
 import com.ppg.iicsdoc.model.tags.TagReference;
 import com.ppg.iicsdoc.model.tags.TaggedDocument;
@@ -136,6 +138,7 @@ public class TagParser {
 
         return positions;
     }
+
 
     /**
      * Constructs a {@link Tag} from parsed components.

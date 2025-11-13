@@ -12,6 +12,7 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -34,7 +35,9 @@ import com.ppg.iicsdoc.model.domain.ProcessType;
 import com.ppg.iicsdoc.model.domain.Response;
 import com.ppg.iicsdoc.model.domain.Transformation;
 import com.ppg.iicsdoc.model.domain.TransformationType;
+import com.ppg.iicsdoc.model.metadata.Metadata;
 import com.ppg.iicsdoc.model.validation.SchemaValidationResult;
+import com.ppg.iicsdoc.service.MetadataService;
 import com.ppg.iicsdoc.util.FileUtil;
 import com.ppg.iicsdoc.validation.XMLValidationService;
 
@@ -70,6 +73,9 @@ public class XMLParserService {
     /** XML schema validation instance */
     private final XMLValidationService validationService;
 
+    /** Enhances the metadata based off tags and annotations found in the XML file. */
+    private final MetadataService enhancementMetadataService;
+
     /**
      * Creates a new instance of {@code XMLParserService} with an attached
      * {@link XMLValidationService} for schema validation.
@@ -78,6 +84,7 @@ public class XMLParserService {
      */
     public XMLParserService(XMLValidationService validationService) {
         this.validationService = validationService;
+        this.enhancementMetadataService = new MetadataService(new MetadataTagParser());
     }
 
     /**
@@ -130,11 +137,10 @@ public class XMLParserService {
             }
 
             FileUtil.validateFileReadable(xmlFile);
-
             Document doc = loadXMLDocument(xmlFile);
             Element root = doc.getDocumentElement();
             ParsedMetadata metadata = buildMetadata(root);
-
+            
             long duration = System.currentTimeMillis() - startTime;
             log.info("Successfully parsed XML file in {} ms", duration);
 
@@ -211,12 +217,21 @@ public class XMLParserService {
             processName = root.getAttributeNS(null, "name");
         }
 
+        String description = getTextContent(root, "metadata/description");
+        String author = getTextContent(root, "metadata/author");
+        String owner = getTextContent(root, "metadata/owner");
+
+        Metadata enhancedMetadata = enhancementMetadataService.enhance(
+            description,
+            author,
+            owner);
+
         return ParsedMetadata.builder()
                 .processName(processName)
                 .processType(parseProcessType(root.getAttribute("type")))
                 .version(root.getAttribute("version"))
-                .description(getTextContent(root, "metadata/description"))
-                .author(getTextContent(root, "metadata/author"))
+                .description(enhancedMetadata.getDescription())
+                .author(enhancedMetadata.getAuthor())
                 .created(parseDate(getTextContent(root, "metadata/created")))
                 .modified(parseDate(getTextContent(root, "metadata/modified")))
                 .connections(parseConnections(root))
