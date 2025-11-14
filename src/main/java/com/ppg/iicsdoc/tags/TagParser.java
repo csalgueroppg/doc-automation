@@ -110,7 +110,8 @@ public class TagParser {
                     tags.add(tag);
                 }
             } catch (Exception e) {
-                log.warn("Failed to parse tag: {}", matcher.group(0), e);
+                log.warn("Failed to parse tag: {}",
+                        matcher.group(0), e);
             }
         }
 
@@ -138,7 +139,6 @@ public class TagParser {
 
         return positions;
     }
-
 
     /**
      * Constructs a {@link Tag} from parsed components.

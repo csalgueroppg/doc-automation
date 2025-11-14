@@ -34,7 +34,7 @@ public class MetadataTagParser {
 
     /** Pattern for attributes (key=value) */
     private static final Pattern ATTRIBUTE_PATTERN = Pattern.compile(
-           "([a-zA-Z][a-zA-Z0-9_]*)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,]+))");
+            "([a-zA-Z][a-zA-Z0-9_-]*)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^\\s,)]+))");
 
     public List<MetadataTag> parseTags(String text) {
         if (text == null || text.trim().isEmpty()) {
@@ -102,8 +102,30 @@ public class MetadataTagParser {
         return tag != null ? tag.getValue() : null;
     }
 
+    /**
+     * Parses a string of attribute key-value pairs into a map.
+     * 
+     * <p>
+     * Supported formats for values:
+     * </p>
+     * 
+     * <ul>
+     * <li>Unquoted: {@code key=value}</li>
+     * <li>Double-quoted: {@code key="value"}</li>
+     * <li>Single-quoted: {@code key='value'}</li>
+     * </ul>
+     * 
+     * <p>
+     * Keys must start with a letter and may contain letters, digits,
+     * underscores, or hyphens. Values are trimmed and null-safe.
+     * </p>
+     * 
+     * @param attributesStr the raw attribute string (e.g. {@code language=java},
+     *                      {@code version=1.0.0})
+     * @return a map of parsed attributes; empty if input is null or blank input
+     */
     private Map<String, String> parseAttributes(String attributesStr) {
-        if (attributesStr == null || attributesStr.trim().isEmpty()) {
+        if (attributesStr == null || attributesStr.isBlank()) {
             return Map.of();
         }
 
@@ -111,10 +133,23 @@ public class MetadataTagParser {
         Matcher matcher = ATTRIBUTE_PATTERN.matcher(attributesStr);
 
         while (matcher.find()) {
-            String key = matcher.group(1);
-            String value = matcher.group(2);
+            try {
+                String key = matcher.group(1);
+            String value = matcher.group(2) != null
+                    ? matcher.group(2)
+                    : matcher.group(3) != null
+                            ? matcher.group(3)
+                            : matcher.group(4);
 
-            attributes.put(key, value);
+                if (key != null && value != null) {
+                    attributes.put(key, value);
+                } else {
+                    log.warn("Skipping malformed attribute, key=%s, value=%s%n", 
+                        key, value);
+                }
+            } catch (Exception e) {
+                log.error("Error parsing attribute: " + e.getMessage());
+            }
         }
 
         return attributes;
